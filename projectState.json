@@ -1,0 +1,244 @@
+{
+  "meta": {
+    "projectName": "JLPT Personal Learning Agent",
+    "lastUpdated": "2026-04-14",
+    "currentPhase": "Phase 1",
+    "phaseStatus": "in_progress",
+    "version": "1.2.0"
+  },
+  "agents": {
+    "minseok": {
+      "name": "민석",
+      "role": "PM/PO",
+      "promptFile": "prompts/CLAUDE_민석PM_v3.md",
+      "status": "in_progress",
+      "currentTask": "전체 에이전트 조율 및 Phase 1 진행 관리",
+      "nextAction": "재현 핸드오프 공식 승인, 인증 범위와 우선순위 이슈 정리"
+    },
+    "sujin": {
+      "name": "수진",
+      "role": "데이터 에이전트",
+      "promptFile": "prompts/수진_에이전트_프롬프트.md",
+      "status": "in_progress",
+      "currentTask": "だ/です 접속 규칙 수정본 작성",
+      "nextAction": "수정본 완료 후 츠쿠야에게 재검수 요청"
+    },
+    "tsukuya": {
+      "name": "츠쿠야",
+      "role": "검증 에이전트",
+      "promptFile": "prompts/츠쿠야_시스템프롬프트_v1.md",
+      "status": "pending",
+      "currentTask": "だ/です 수정본 재검수 대기",
+      "nextAction": "수진 수정본 수신 후 재검수 진행"
+    },
+    "jaehyeon": {
+      "name": "재현",
+      "role": "AI+백엔드+인프라",
+      "promptFile": "prompts/재현_에이전트_프롬프트.md",
+      "status": "pending",
+      "currentTask": "문서 및 구조 정리 완료, 구현 착수 대기",
+      "nextAction": "프로젝트 디렉토리 구조 확정, Pydantic 스키마와 FastAPI 엔드포인트 구현 시작",
+      "techStack": {
+        "python": "3.11",
+        "backend": "FastAPI",
+        "orm": "SQLAlchemy 2.0 + Alembic",
+        "database": "PostgreSQL 16",
+        "vectorSearch": "pgvector",
+        "embedding": "OpenAI text-embedding-3-small",
+        "llm": "GPT-4o-mini",
+        "agentFramework": "LangGraph",
+        "cache": "Redis",
+        "demoUi": "Streamlit",
+        "container": "Docker Compose",
+        "packageManager": "Poetry",
+        "test": "pytest + pytest-asyncio"
+      }
+    }
+  },
+  "deliverables": {
+    "claudeContext": {
+      "status": "done",
+      "owner": "jaehyeon",
+      "file": "CLAUDE.md",
+      "note": "세션용 프로젝트 컨텍스트"
+    },
+    "productOverview": {
+      "status": "done",
+      "owner": "jaehyeon",
+      "file": "docs/productOverview.md",
+      "note": "제품 배경과 사용자 문제 정의"
+    },
+    "serviceFlows": {
+      "status": "done",
+      "owner": "jaehyeon",
+      "file": "docs/serviceFlows.md",
+      "note": "온보딩, 학습 루프, Phase 범위"
+    },
+    "agentGuide": {
+      "status": "done",
+      "owner": "jaehyeon",
+      "file": "docs/agentGuide.md",
+      "note": "문서 권한과 협업 규칙"
+    },
+    "apiEndpoints": {
+      "status": "done",
+      "owner": "jaehyeon",
+      "file": "docs/apiEndpoints.md",
+      "note": "Phase 1 API 계약 초안"
+    },
+    "decisionLog": {
+      "status": "done",
+      "owner": "jaehyeon",
+      "file": "docs/decisionLog.md",
+      "note": "확정 의사결정과 근거"
+    },
+    "localDevSetup": {
+      "status": "done",
+      "owner": "jaehyeon",
+      "file": "docs/localDevSetup.md",
+      "note": "로컬 개발 환경 세팅"
+    },
+    "dockerCompose": {
+      "status": "done",
+      "owner": "jaehyeon",
+      "file": "docker-compose.yml",
+      "note": "PostgreSQL 16 + pgvector + Redis"
+    },
+    "n5GrammarCatalog": {
+      "status": "done",
+      "owner": "sujin",
+      "file": "data/N5_전체목록_기준표_v2.xlsx",
+      "note": "84개 문법 기준표"
+    },
+    "n5LlmSamples": {
+      "status": "done",
+      "owner": "sujin",
+      "file": "data/N5_LLM샘플_5개.xlsx",
+      "note": "4건 승인, 1건 수정 요청"
+    },
+    "n5GrammarChunks": {
+      "status": "pending",
+      "owner": "jaehyeon",
+      "file": "data/N5_grammar_chunks.json",
+      "note": "배치 스크립트 작성 후 생성"
+    }
+  },
+  "handoffQueue": [
+    {
+      "id": "HO-001",
+      "from": "sujin",
+      "to": "tsukuya",
+      "item": "だ/です 접속 규칙 수정본",
+      "status": "in_progress",
+      "blocker": null
+    },
+    {
+      "id": "HO-002",
+      "from": "sujin",
+      "to": "jaehyeon",
+      "item": "N5 LLM 샘플 5개 프롬프트 템플릿",
+      "status": "pending_approval",
+      "blocker": "PM 민석 승인 필요"
+    }
+  ],
+  "openIssues": [
+    {
+      "id": "ISSUE-001",
+      "title": "PWA vs 네이티브 앱 최종 결정",
+      "owner": "minseok",
+      "priority": "medium",
+      "phase": "Phase 1 later"
+    },
+    {
+      "id": "ISSUE-002",
+      "title": "비로그인 세션 저장 후 로그인 계정 연결 방식 확정",
+      "owner": "jaehyeon",
+      "priority": "high",
+      "phase": "Phase 1"
+    },
+    {
+      "id": "ISSUE-003",
+      "title": "LLM 배치 생성 스크립트 작성",
+      "owner": "jaehyeon",
+      "priority": "high",
+      "phase": "Phase 1"
+    },
+    {
+      "id": "ISSUE-004",
+      "title": "Phase 1 사용자 인증 범위 확정",
+      "owner": "minseok",
+      "priority": "high",
+      "phase": "Phase 1"
+    },
+    {
+      "id": "ISSUE-005",
+      "title": "grammar point ID 체계 확정",
+      "owner": "sujin",
+      "priority": "medium",
+      "phase": "Phase 1"
+    },
+    {
+      "id": "ISSUE-006",
+      "title": "text-embedding-3-small 크로스링구얼 검색 정확도 실측",
+      "owner": "jaehyeon",
+      "priority": "medium",
+      "phase": "Phase 1"
+    }
+  ],
+  "decisionLog": [
+    {
+      "date": "2026-04-10",
+      "decision": "생성과 검수 역할 분리",
+      "reason": "데이터 품질과 검수 독립성 확보",
+      "related": "data workflow",
+      "approvedBy": "minseok"
+    },
+    {
+      "date": "2026-04-14",
+      "decision": "Phase 1 벡터 검색은 pgvector로 통일",
+      "reason": "PostgreSQL과 단일화해 로컬 운영과 디버깅을 단순화",
+      "related": "docs, docker-compose.yml, pyproject.toml",
+      "approvedBy": "minseok"
+    }
+  ],
+  "phaseMilestones": {
+    "phase1": {
+      "name": "MVP",
+      "target": "2개월차 말",
+      "milestones": [
+        {
+          "label": "1개월차 말",
+          "goal": "N5 샘플 데이터 + RAG 프로토타입 동작",
+          "status": "in_progress"
+        },
+        {
+          "label": "2개월차 말",
+          "goal": "독립 데모 가능한 Phase 1 완성",
+          "status": "pending"
+        }
+      ]
+    },
+    "phase2": {
+      "name": "청해 훈련",
+      "target": "3개월차 말",
+      "milestones": [
+        {
+          "label": "3개월차 말",
+          "goal": "청해 문제 생성, 음성 재생, 이해도 확인",
+          "status": "pending"
+        }
+      ]
+    },
+    "phase3": {
+      "name": "고도화",
+      "target": "4~5개월차",
+      "milestones": [
+        {
+          "label": "유동",
+          "goal": "오답 분석, 평가 파이프라인, 대시보드, 상품화 검토",
+          "status": "pending"
+        }
+      ]
+    }
+  }
+}
