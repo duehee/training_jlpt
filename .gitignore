@@ -1,5 +1,6 @@
 # 환경변수 (절대 커밋 금지)
 .env
+.env.*
 
 # Python
 __pycache__/
@@ -8,6 +9,7 @@ __pycache__/
 dist/
 build/
 .venv/
+.python-version
 
 # IDE
 .idea/
@@ -19,7 +21,25 @@ build/
 # 테스트 / 커버리지
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.hypothesis/
 
 # Alembic
 alembic/versions/*.pyc
+
+# Poetry / 패키징 로컬 설정
+poetry.toml
+
+# 정적 분석 / 린트 캐시
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 로컬 DB / 로그
+*.sqlite3
+*.db
+*.log
