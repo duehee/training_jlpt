@@ -8,7 +8,7 @@
 
 ## 배경
 
-저 본인의 **JLPT N2 불합격** 경험에서 출발했습니다.
+저 본인의 JLPT N2 불합격 경험에서 출발했습니다.
 문제집을 폈을 때 "뭐부터 해야 할지 모르겠다"는 문제를 AI로 풀어보고,
 이런 본인의 부족한 부분을 채우고자 만들어보는 프로젝트입니다. 
 
@@ -44,7 +44,7 @@
 - **Embedding**: OpenAI text-embedding-3-small
 - **Infra**: Docker Compose
 
-기술 선택 근거는 [`docs/decision_log.md`](docs/decision_log.md) 참조.
+기술 선택 근거는 [`docs/decision_log.md`](docs/decision_log.md) 참조
 
 ---
 
@@ -58,7 +58,7 @@
 
 ## 시작하기
 
-로컬 실행 방법은 [`docs/local_dev_setup.md`](docs/local_dev_setup.md)를 참조하세요.
+로컬 실행 방법은 [`docs/local_dev_setup.md`](docs/local_dev_setup.md)를 참조
 
 ```bash
 docker compose up -d
