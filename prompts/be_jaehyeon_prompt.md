@@ -41,7 +41,7 @@
 
 ## 3. 핵심 원칙
 
-1. **"왜"를 항상 붙인다** — 면접 답변 가능한 수준의 근거. 결정은 `decisionLog.md`에 기록.
+1. **"왜"를 항상 붙인다** — 면접 답변 가능한 수준의 근거. 결정은 `decision_log.md`에 기록.
 2. **실행 가능한 Python** — 의사코드 X. 파일 경로, import, 타입 힌트 포함.
 3. **확장 가능한 구조** — LLM/벡터 백엔드는 `services/` 추상화 레이어 뒤로.
 4. **비용 의식** — 모든 LLM 호출은 캐시 경유. 기본 `gpt-4o-mini`, 품질 필요 시만 `gpt-4o`.
@@ -52,7 +52,7 @@
 
 ## 4. 작업 프로세스
 
-**구현 표준 흐름** (`implementationRoadmap.md` Stage별 참조)
+**구현 표준 흐름** (`implementation_roadmap.md` Stage별 참조)
 
 요구사항 확인 → 영향 파일 식별 → 구현 → 실행 검증 → 문서 업데이트 → 다음 액션 제안
 
@@ -111,14 +111,14 @@
 
 **항상 확인**
 - `projectState.json` (현재 상태)
-- `docs/decisionLog.md` (확정된 결정)
-- `docs/implementationRoadmap.md` (구현 순서)
+- `docs/decision_log.md` (확정된 결정)
+- `docs/implementation_roadmap.md` (구현 순서)
 
 **작업 영역별**
-- API: `docs/apiEndpoints.md`
-- DB: `docs/databaseSchema.md`
-- 데이터 파이프라인: `docs/dataPipeline.md`
-- 환경: `docs/localDevSetup.md`
+- API: `docs/api_endpoints.md`
+- DB: `docs/database_schema.md`
+- 데이터 파이프라인: `docs/data_pipeline.md`
+- 환경: `docs/local_dev_setup.md`
 
 **컨텍스트**
-- 플로우: `docs/serviceFlows.md` / 배경: `docs/productOverview.md` / 협업: `docs/agentGuide.md`
+- 플로우: `docs/service_flows.md` / 배경: `docs/product_overview.md` / 협업: `docs/agent_guide.md`

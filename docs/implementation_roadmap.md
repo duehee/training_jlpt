@@ -2,7 +2,7 @@
 
 > 최종 업데이트: 2026-04-19
 > 담당 축: **When** — 무엇을 어떤 순서로 구현하는가
-> 관련 문서: `serviceFlows.md`, `databaseSchema.md`, `apiEndpoints.md`
+> 관련 문서: `service_flows.md`, `database_schema.md`, `api_endpoints.md`
 
 ---
 
@@ -23,11 +23,11 @@
 - 초기 결정 필요 항목 → 11장
 
 **이 문서에서 찾을 수 없는 것**
-- 사용자 플로우 → `serviceFlows.md`
-- DB 스키마 → `databaseSchema.md`
-- API 계약 → `apiEndpoints.md`
-- 확정된 의사결정 → `decisionLog.md`
-- 에이전트 협업 규칙 → `agentGuide.md`
+- 사용자 플로우 → `service_flows.md`
+- DB 스키마 → `database_schema.md`
+- API 계약 → `api_endpoints.md`
+- 확정된 의사결정 → `decision_log.md`
+- 에이전트 협업 규칙 → `agent_guide.md`
 
 ---
 
@@ -139,7 +139,7 @@ training_jlpt/
 
 ### 네이밍 참고
 - 디렉토리/파일: `snake_case` (파이썬 관례)
-- 단, `docs/` 하위 문서 파일명은 `camelCase` (문서 관례, `agentGuide.md` 참조)
+- 단, `docs/` 하위 문서 파일명도 `snake_case` (문서 관례, `agent_guide.md` 참조)
 
 ---
 
@@ -186,12 +186,12 @@ curl http://localhost:8000/health
 진단을 끝내고 레벨/약점을 받아볼 수 있는 상태.
 
 ### 범위
-- [ ] Alembic Migration 1: 기반 + 익명 구간 (`databaseSchema.md` 17-1장)
+- [ ] Alembic Migration 1: 기반 + 익명 구간 (`database_schema.md` 17-1장)
 - [ ] Alembic Migration 2: 회원 구간
 - [ ] ORM 모델 작성 (`anonymous_sessions`, `diagnostic_*`, `users`)
 - [ ] 진단 문제 seed 데이터 (최소 10문항)
 - [ ] seed 스크립트: `src/scripts/seed_diagnosis_questions.py`
-- [ ] API 구현 (`apiEndpoints.md` 5, 6장):
+- [ ] API 구현 (`api_endpoints.md` 5, 6장):
   - [ ] `POST /api/v1/sessions/anonymous`
   - [ ] `POST /api/v1/diagnosis/sessions`
   - [ ] `GET /api/v1/diagnosis/sessions/{id}/questions`
@@ -231,7 +231,7 @@ curl -X POST /api/v1/sessions/anonymous
 - [ ] Alembic Migration 3: 콘텐츠 + 캐시
 - [ ] Alembic Migration 4: 약점 + 인덱스
 - [ ] ORM 모델 추가 (`learning_*`, `weak_points`, `last_session`, `grammar_chunks`, `llm_response_cache`)
-- [ ] API 구현 (`apiEndpoints.md` 7, 8, 9장):
+- [ ] API 구현 (`api_endpoints.md` 7, 8, 9장):
   - [ ] `GET /api/v1/recommendations/learning-path`
   - [ ] `POST /api/v1/learning/sessions`
   - [ ] `GET /api/v1/learning/sessions/{id}`
@@ -306,7 +306,7 @@ curl -X POST /api/v1/sessions/anonymous
 
 ### 완료 기준
 - 학습 루프가 **그래프 형태로 추적 가능**
-- 같은 API 계약(`apiEndpoints.md`)이 유지됨
+- 같은 API 계약(`api_endpoints.md`)이 유지됨
 - LangGraph 내부 리팩토링만으로 외부 계약 변화 없음
 
 ### 의존성
@@ -352,8 +352,8 @@ curl -X POST /api/v1/sessions/anonymous
 | 수진 → 재현 | `data/curated/n5_grammar_chunks.json` | JSON 배열 (15장 구조) |
 | 수진 → 재현 | `data/curated/n5_compare_chunks.json` | JSON 배열 |
 | 수진 → 재현 | `data/curated/diagnosis_questions.json` | JSON 배열 (seed용) |
-| 츠쿠야 → 팀 | `docs/validationChecklist.md` | 마크다운 체크리스트 |
-| 민석 → 팀 | `docs/decisionLog.md` 업데이트 | 날짜별 항목 추가 |
+| 츠쿠야 → 팀 | `docs/validation_checklist.md` | 마크다운 체크리스트 |
+| 민석 → 팀 | `docs/decision_log.md` 업데이트 | 날짜별 항목 추가 |
 | 재현 → 팀 | `src/db/models/`, `src/api/schemas/`, `alembic/versions/` | 코드 |
 | 재현 → 수진 | `src/scripts/generate_chunks.py` | 배치 생성 스크립트 |
 
@@ -367,11 +367,11 @@ Stage 1 착수 전에 반드시 확정해야 할 항목입니다.
 
 | # | 항목 | 담당 | 근거 문서 |
 |---|------|------|----------|
-| 1 | Phase 1 인증 방식 (닉네임 vs 이메일) | 민석 | `serviceFlows.md` 미결 |
-| 2 | 익명 세션 저장소 (Redis vs PG vs 혼용) | 재현 | `databaseSchema.md` 미결 |
-| 3 | `grammar_point_id` 포맷 | 수진 + 재현 | `databaseSchema.md` 미결 |
-| 4 | 진단 문제 저장소 (DB vs JSON seed) | 재현 | `apiEndpoints.md` 미결 |
-| 5 | `diagnosed_level` 계산 규칙 | 재현 + 민석 | `apiEndpoints.md` 미결 |
+| 1 | Phase 1 인증 방식 (닉네임 vs 이메일) | 민석 | `service_flows.md` 미결 |
+| 2 | 익명 세션 저장소 (Redis vs PG vs 혼용) | 재현 | `database_schema.md` 미결 |
+| 3 | `grammar_point_id` 포맷 | 수진 + 재현 | `database_schema.md` 미결 |
+| 4 | 진단 문제 저장소 (DB vs JSON seed) | 재현 | `api_endpoints.md` 미결 |
+| 5 | `diagnosed_level` 계산 규칙 | 재현 + 민석 | `api_endpoints.md` 미결 |
 | 6 | 진단 점수 방식 (완전 규칙 vs LLM 보조) | 재현 + 민석 | - |
 
 ---

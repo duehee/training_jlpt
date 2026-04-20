@@ -44,7 +44,7 @@
 - **Embedding**: OpenAI text-embedding-3-small
 - **Infra**: Docker Compose
 
-기술 선택 근거는 [`docs/decisionLog.md`](docs/decisionLog.md) 참조.
+기술 선택 근거는 [`docs/decision_log.md`](docs/decision_log.md) 참조.
 
 ---
 
@@ -52,13 +52,13 @@
 
 - **Phase 1 설계 완료** — 플로우, DB 스키마, API 계약, 데이터 파이프라인 문서화 완료
 - **Stage 0 착수 준비** — 기반 골격 구현 단계
-- 로드맵 상세: [`docs/implementationRoadmap.md`](docs/implementationRoadmap.md)
+- 로드맵 상세: [`docs/implementation_roadmap.md`](docs/implementation_roadmap.md)
 
 ---
 
 ## 시작하기
 
-로컬 실행 방법은 [`docs/localDevSetup.md`](docs/localDevSetup.md)를 참조하세요.
+로컬 실행 방법은 [`docs/local_dev_setup.md`](docs/local_dev_setup.md)를 참조하세요.
 
 ```bash
 docker compose up -d

@@ -33,7 +33,7 @@
 - 에이전트 간 충돌 조정
 - BORDER 등 레벨 배정 최종 판단
 - 비용 한도 의사결정
-- `decisionLog.md` 작성 책임
+- `decision_log.md` 작성 책임
 
 **비담당**
 - 기술 구현 결정 → **재현님**
@@ -52,7 +52,7 @@
 3. **트레이드오프 명시** — "넣으면 X 시간 더 든다" 같은 현실적 조언.
 4. **포트폴리오 스토리 유지** — N2 불합격 → 시장 분석 → 기술 시연이 하나로 엮인 이야기.
 5. **샘플 먼저, 확장 나중** — 한 번에 전체 X. 검증 후 확장.
-6. **모든 결정에 "왜"** — 면접에서 바로 꺼낼 수 있는 수준의 근거 + `decisionLog.md` 기록.
+6. **모든 결정에 "왜"** — 면접에서 바로 꺼낼 수 있는 수준의 근거 + `decision_log.md` 기록.
 
 ---
 
@@ -60,7 +60,7 @@
 
 **의사결정 표준 흐름**
 
-요청/제안 수신 → 3축 판단 → 트레이드오프 정리 → 추천 + 근거 → 정빈님 확정 → `decisionLog.md` 기록
+요청/제안 수신 → 3축 판단 → 트레이드오프 정리 → 추천 + 근거 → 정빈님 확정 → `decision_log.md` 기록
 
 **3축 판단 매트릭스**
 
@@ -87,7 +87,7 @@
 
 | 입력 | 처리 |
 |------|------|
-| 데이터 레벨 배정 충돌 | 보수적 판정 + `decisionLog.md` 기록 |
+| 데이터 레벨 배정 충돌 | 보수적 판정 + `decision_log.md` 기록 |
 | 비용 예상치 | 한도 결정 + 다음 단계 승인 |
 | 범위 변경 요청 | 3축 판단 후 채택/보류 결정 |
 | 에이전트 간 의견 충돌 | 양쪽 근거 검토 후 최종 판단 |
@@ -134,13 +134,13 @@
 
 **항상 확인**
 - `projectState.json` (현재 상태)
-- `docs/decisionLog.md` (자신이 책임지는 문서) ⭐
-- `docs/productOverview.md` (3축 판단의 뿌리)
+- `docs/decision_log.md` (자신이 책임지는 문서) ⭐
+- `docs/product_overview.md` (3축 판단의 뿌리)
 
 **작업 영역별**
-- Phase 범위: `docs/serviceFlows.md` 4장
-- 구현 일정: `docs/implementationRoadmap.md`
-- 에이전트 협업: `docs/agentGuide.md`
+- Phase 범위: `docs/service_flows.md` 4장
+- 구현 일정: `docs/implementation_roadmap.md`
+- 에이전트 협업: `docs/agent_guide.md`
 
 **컨텍스트**
-- API: `docs/apiEndpoints.md` / DB: `docs/databaseSchema.md` / 데이터: `docs/dataPipeline.md`
+- API: `docs/api_endpoints.md` / DB: `docs/database_schema.md` / 데이터: `docs/data_pipeline.md`

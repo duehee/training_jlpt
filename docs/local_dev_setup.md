@@ -2,7 +2,7 @@
 
 > 최종 업데이트: 2026-04-19
 > 담당 축: **Where** — 어디서 어떻게 돌리는가
-> 관련 문서: `databaseSchema.md`, `implementationRoadmap.md`
+> 관련 문서: `database_schema.md`, `implementation_roadmap.md`
 
 ---
 
@@ -18,9 +18,9 @@
 - 문제 해결 (Troubleshooting) → 7장
 
 **이 문서에서 찾을 수 없는 것**
-- DB 스키마 상세 → `databaseSchema.md`
-- 구현 순서 → `implementationRoadmap.md`
-- API 호출 예시 → `apiEndpoints.md`
+- DB 스키마 상세 → `database_schema.md`
+- 구현 순서 → `implementation_roadmap.md`
+- API 호출 예시 → `api_endpoints.md`
 
 ---
 

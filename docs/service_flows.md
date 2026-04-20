@@ -2,7 +2,7 @@
 
 > 최종 업데이트: 2026-04-19
 > 담당 축: **What** — 사용자가 무엇을 경험하는가
-> 관련 문서: `productOverview.md`, `apiEndpoints.md`, `databaseSchema.md`
+> 관련 문서: `product_overview.md`, `api_endpoints.md`, `database_schema.md`
 
 ---
 
@@ -16,11 +16,11 @@
 - 데이터 단위 (청크 유형) → 5장
 
 **이 문서에서 찾을 수 없는 것**
-- 구현 트랜잭션 상세 → `databaseSchema.md` 4장
-- API 호출 시퀀스 → `apiEndpoints.md`
-- 테이블별 컬럼 → `databaseSchema.md`
-- 설계 근거/의사결정 → `decisionLog.md`
-- 구현 순서 → `implementationRoadmap.md`
+- 구현 트랜잭션 상세 → `database_schema.md` 4장
+- API 호출 시퀀스 → `api_endpoints.md`
+- 테이블별 컬럼 → `database_schema.md`
+- 설계 근거/의사결정 → `decision_log.md`
+- 구현 순서 → `implementation_roadmap.md`
 
 ---
 
@@ -54,12 +54,12 @@ JLPT 개인 학습 에이전트에서 **사용자가 경험하는 흐름**과 **
 가입 완료 → 진단 결과 자동 승계 → 학습 시작
 ```
 
-**참조 다이어그램**: `docs/newUserOnboardingFlow.svg`
+**참조 다이어그램**: `docs/new_user_onboarding_flow.svg`
 
 **관련 문서**:
-- 진단 API 상세 → `apiEndpoints.md` 3장
-- 익명/회원 데이터 구조 → `databaseSchema.md` 3장, 4~7장
-- 익명 → 로그인 데이터 승계 구현 → `databaseSchema.md` 4장
+- 진단 API 상세 → `api_endpoints.md` 3장
+- 익명/회원 데이터 구조 → `database_schema.md` 3장, 4~7장
+- 익명 → 로그인 데이터 승계 구현 → `database_schema.md` 4장
 
 ---
 
@@ -87,12 +87,12 @@ JLPT 개인 학습 에이전트에서 **사용자가 경험하는 흐름**과 **
          └─ 연속 3회 오답 시 세션 종료, 다른 포인트 제안
 ```
 
-**참조 다이어그램**: `docs/coreLearningAgentFlow.svg`
+**참조 다이어그램**: `docs/core_learning_agent_flow.svg`
 
 **관련 문서**:
-- 학습 API 상세 → `apiEndpoints.md` 6장
-- 청크 JSON 구조 → `databaseSchema.md` 15장
-- LLM 캐싱 전략 → `databaseSchema.md` 14장
+- 학습 API 상세 → `api_endpoints.md` 6장
+- 청크 JSON 구조 → `database_schema.md` 15장
+- LLM 캐싱 전략 → `database_schema.md` 14장
 
 ---
 
@@ -115,8 +115,8 @@ last_session 조회
 ```
 
 **관련 문서**:
-- 이어하기 API → `apiEndpoints.md` 7장
-- `last_session` 테이블 → `databaseSchema.md` 12장
+- 이어하기 API → `api_endpoints.md` 7장
+- `last_session` 테이블 → `database_schema.md` 12장
 
 ---
 
@@ -159,7 +159,7 @@ last_session 조회
 
 ### Phase 범위 조정 원칙
 - Phase 1 완료가 최우선. Phase 2/3가 지연되면 축소 가능.
-- 새 기능 제안은 `productOverview.md` 6장 "기능 채택 판단 기준" 통과해야 함.
+- 새 기능 제안은 `product_overview.md` 6장 "기능 채택 판단 기준" 통과해야 함.
 
 ---
 
@@ -174,7 +174,7 @@ last_session 조회
 | 청해 청크 | TTS 스크립트 + 청해 문항 | `listening` | Phase 2 |
 | 독해 청크 | 독해 지문 + 해설 | `reading` | Phase 3 |
 
-**청크 상세 스키마**: `databaseSchema.md` 12장, 14장 참조.
+**청크 상세 스키마**: `database_schema.md` 12장, 14장 참조.
 
 ---
 

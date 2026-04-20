@@ -65,37 +65,37 @@
     "productOverview": {
       "status": "done",
       "owner": "jaehyeon",
-      "file": "docs/productOverview.md",
+      "file": "docs/product_overview.md",
       "note": "제품 배경과 사용자 문제 정의"
     },
     "serviceFlows": {
       "status": "done",
       "owner": "jaehyeon",
-      "file": "docs/serviceFlows.md",
+      "file": "docs/service_flows.md",
       "note": "온보딩, 학습 루프, Phase 범위"
     },
     "agentGuide": {
       "status": "done",
       "owner": "jaehyeon",
-      "file": "docs/agentGuide.md",
+      "file": "docs/agent_guide.md",
       "note": "문서 권한과 협업 규칙"
     },
     "apiEndpoints": {
       "status": "done",
       "owner": "jaehyeon",
-      "file": "docs/apiEndpoints.md",
+      "file": "docs/api_endpoints.md",
       "note": "Phase 1 API 계약 초안"
     },
     "decisionLog": {
       "status": "done",
       "owner": "jaehyeon",
-      "file": "docs/decisionLog.md",
+      "file": "docs/decision_log.md",
       "note": "확정 의사결정과 근거"
     },
     "localDevSetup": {
       "status": "done",
       "owner": "jaehyeon",
-      "file": "docs/localDevSetup.md",
+      "file": "docs/local_dev_setup.md",
       "note": "로컬 개발 환경 세팅"
     },
     "dockerCompose": {

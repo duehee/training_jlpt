@@ -2,7 +2,7 @@
 
 > 최종 업데이트: 2026-04-19
 > 담당 축: **How-internal** — 데이터를 어떻게 저장하는가
-> 관련 문서: `serviceFlows.md`, `apiEndpoints.md`, `decisionLog.md`
+> 관련 문서: `service_flows.md`, `api_endpoints.md`, `decision_log.md`
 
 ---
 
@@ -29,10 +29,10 @@
 - 마이그레이션 순서 → 17장
 
 **이 문서에서 찾을 수 없는 것**
-- 사용자 관점 플로우 → `serviceFlows.md`
-- API 엔드포인트 → `apiEndpoints.md`
-- 구현 순서 → `implementationRoadmap.md`
-- 설계 결정의 배경 → `decisionLog.md`
+- 사용자 관점 플로우 → `service_flows.md`
+- API 엔드포인트 → `api_endpoints.md`
+- 구현 순서 → `implementation_roadmap.md`
+- 설계 결정의 배경 → `decision_log.md`
 
 ---
 
@@ -40,7 +40,7 @@
 PostgreSQL 16 + pgvector 기반의 **데이터베이스 스키마 참조**입니다.
 모든 테이블 정의, 컬럼 타입, 제약, 인덱스, 청크 JSON 구조의 단일 진실 원천입니다.
 
-**구현 관점 기준 문서**로, 사용자 플로우는 `serviceFlows.md`를 먼저 보세요.
+**구현 관점 기준 문서**로, 사용자 플로우는 `service_flows.md`를 먼저 보세요.
 
 ---
 
@@ -231,7 +231,7 @@ with db.transaction():
 
 ### 4-7. 관련 API 엔드포인트
 
-구체적인 API 계약은 `apiEndpoints.md` 참조.
+구체적인 API 계약은 `api_endpoints.md` 참조.
 
 | API | 용도 |
 |-----|------|
@@ -352,7 +352,7 @@ with db.transaction():
 ### 메모
 - `anonymous_session_id`는 **없습니다.** 학습은 로그인 이후만 허용.
 - `explanation_version`이 2 이상이면 재설명 경로를 거친 것.
-- 오answer 3회 후 `status = 'completed'`로 강제 종료 (serviceFlows.md 2장 참조).
+- 오answer 3회 후 `status = 'completed'`로 강제 종료 (service_flows.md 2장 참조).
 
 ---
 

@@ -13,7 +13,7 @@ Phase 1 scope: N5~N3 diagnosis + learning records (production-grade).
 - Cache: Redis (LLM response cache)
 - Embedding: text-embedding-3-small
 - Infra: Docker Compose
-- Detailed rationale: docs/agentGuide.md, docs/decisionLog.md
+- Detailed rationale: docs/agent_guide.md, docs/decision_log.md
 
 ## [CONSTRAIN] Conventions (NON-NEGOTIABLE)
 - Python: snake_case for functions/variables, PascalCase for classes
@@ -106,7 +106,7 @@ See eval/jlpt_eval.py. Key areas:
 - Ask when blocked on unclear requirements
 
 ## Reference
-- docs/agentGuide.md, docs/databaseSchema.md
-- docs/decisionLog.md, docs/apiEndpoints.md
-- docs/implementationRoadmap.md, docs/serviceFlows.md
+- docs/agent_guide.md, docs/database_schema.md
+- docs/decision_log.md, docs/api_endpoints.md
+- docs/implementation_roadmap.md, docs/service_flows.md
 - Role prompts: prompts/

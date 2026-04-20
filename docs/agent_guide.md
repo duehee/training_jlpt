@@ -2,7 +2,7 @@
 
 > 최종 업데이트: 2026-04-19
 > 담당 축: **Who** — 누가 무엇을 담당하는가
-> 관련 문서: `productOverview.md`, `decisionLog.md`, `implementationRoadmap.md`
+> 관련 문서: `product_overview.md`, `decision_log.md`, `implementation_roadmap.md`
 
 ---
 
@@ -18,9 +18,9 @@
 - 네이밍 원칙 → 7장
 
 **이 문서에서 찾을 수 없는 것**
-- 제품 맥락 → `productOverview.md`
-- 확정된 결정 → `decisionLog.md`
-- 구현 순서 → `implementationRoadmap.md`
+- 제품 맥락 → `product_overview.md`
+- 확정된 결정 → `decision_log.md`
+- 구현 순서 → `implementation_roadmap.md`
 - 각 역할별 상세 프롬프트 → `prompts/*_prompt.md`
 
 ---
@@ -36,15 +36,15 @@
 정보가 충돌할 때는 아래 순서로 판단합니다.
 
 1. `projectState.json` (예정) — 현재 작업 상태
-2. `docs/decisionLog.md` — 확정된 의사결정
-3. `docs/implementationRoadmap.md` — 구현 순서
-4. `docs/databaseSchema.md`, `docs/apiEndpoints.md` — 기술 계약
-5. `docs/serviceFlows.md`, `docs/productOverview.md` — 제품 맥락
-6. `docs/localDevSetup.md` — 로컬 환경
+2. `docs/decision_log.md` — 확정된 의사결정
+3. `docs/implementation_roadmap.md` — 구현 순서
+4. `docs/database_schema.md`, `docs/api_endpoints.md` — 기술 계약
+5. `docs/service_flows.md`, `docs/product_overview.md` — 제품 맥락
+6. `docs/local_dev_setup.md` — 로컬 환경
 7. `CLAUDE.md` — 전역 코딩 규칙
 
 `projectState.json`은 **현재 작업 상태**의 기준입니다.
-`decisionLog.md`는 **확정 의사결정**의 기준입니다.
+`decision_log.md`는 **확정 의사결정**의 기준입니다.
 
 ---
 
@@ -55,16 +55,16 @@ training_jlpt/
 ├── projectState.json              공유 상태 파일 (예정)
 ├── CLAUDE.md                      전역 코딩 규칙 / 재현 페르소나 가드레일
 ├── docs/
-│   ├── agentGuide.md              에이전트 운영 가이드 (이 문서)
-│   ├── productOverview.md         제품 배경과 사용자 문제
-│   ├── serviceFlows.md            서비스 플로우와 Phase 범위
-│   ├── implementationRoadmap.md   구현 순서와 Stage 상세
-│   ├── databaseSchema.md          DB 스키마
-│   ├── apiEndpoints.md            API 계약
-│   ├── decisionLog.md             확정 의사결정 기록
-│   ├── localDevSetup.md           로컬 개발 환경 가이드
-│   ├── newUserOnboardingFlow.svg
-│   └── coreLearningAgentFlow.svg
+│   ├── agent_guide.md              에이전트 운영 가이드 (이 문서)
+│   ├── product_overview.md         제품 배경과 사용자 문제
+│   ├── service_flows.md            서비스 플로우와 Phase 범위
+│   ├── implementation_roadmap.md   구현 순서와 Stage 상세
+│   ├── database_schema.md          DB 스키마
+│   ├── api_endpoints.md            API 계약
+│   ├── decision_log.md             확정 의사결정 기록
+│   ├── local_dev_setup.md           로컬 개발 환경 가이드
+│   ├── new_user_onboarding_flow.svg
+│   └── core_learning_agent_flow.svg
 ├── prompts/
 │   ├── AGENTs.md                  공통 하네스 규칙
 │   ├── be_jaehyeon_prompt.md      재현 (AI + 백엔드 + 인프라)
@@ -85,20 +85,20 @@ training_jlpt/
 | 문서 | 담당 축 | 갱신 기준 |
 |------|---------|----------|
 | `projectState.json` (예정) | 현재 상태 | 작업 상태가 변할 때 |
-| `decisionLog.md` | 확정 결정 | 결정이 확정될 때 (삭제 없음) |
-| `implementationRoadmap.md` | 구현 순서 | Stage 범위가 바뀔 때 |
-| `productOverview.md` | 제품 배경 | 제품 방향이 바뀔 때 |
-| `serviceFlows.md` | 사용자 흐름 | 플로우가 바뀔 때 |
-| `databaseSchema.md` | DB 스키마 | 스키마가 바뀔 때 |
-| `apiEndpoints.md` | API 계약 | 엔드포인트가 바뀔 때 |
-| `localDevSetup.md` | 로컬 환경 | 인프라/도구가 바뀔 때 |
+| `decision_log.md` | 확정 결정 | 결정이 확정될 때 (삭제 없음) |
+| `implementation_roadmap.md` | 구현 순서 | Stage 범위가 바뀔 때 |
+| `product_overview.md` | 제품 배경 | 제품 방향이 바뀔 때 |
+| `service_flows.md` | 사용자 흐름 | 플로우가 바뀔 때 |
+| `database_schema.md` | DB 스키마 | 스키마가 바뀔 때 |
+| `api_endpoints.md` | API 계약 | 엔드포인트가 바뀔 때 |
+| `local_dev_setup.md` | 로컬 환경 | 인프라/도구가 바뀔 때 |
 
 ### 핵심 원칙
 
 - **한 사실은 한 문서에만** (SSOT: Single Source of Truth).
 - 개요 문서에 임시 작업 상태를 적지 않습니다.
 - 상태성 정보는 `projectState.json`에 둡니다 (예정).
-- 번복되는 결정은 `decisionLog.md`에 **새 항목**으로 추가하고 기존 항목은 삭제하지 않습니다.
+- 번복되는 결정은 `decision_log.md`에 **새 항목**으로 추가하고 기존 항목은 삭제하지 않습니다.
 
 ---
 
@@ -125,11 +125,11 @@ training_jlpt/
 - `handoffQueue`
 - `openIssues`
 - `deliverables`
-- `decisionLog.md`
+- `decision_log.md`
 
 ### 4-3. 핸드오프 시
 
-`implementationRoadmap.md` 10장 "핸드오프 산출물 표준"을 따릅니다.
+`implementation_roadmap.md` 10장 "핸드오프 산출물 표준"을 따릅니다.
 
 **파일 기반 산출물이 없으면 핸드오프는 완료되지 않은 것으로 간주합니다.**
 
@@ -139,9 +139,9 @@ training_jlpt/
 
 | 에이전트 | 주 역할 | 주로 갱신하는 항목 |
 |---------|--------|-------------------|
-| `minseok` | 우선순위, 승인, 범위 확정 | `decisionLog.md`, `projectState.json` 의 승인 항목 |
+| `minseok` | 우선순위, 승인, 범위 확정 | `decision_log.md`, `projectState.json` 의 승인 항목 |
 | `sujin` | 문법 데이터 작성 | `data/curated/`, `projectState.json` |
-| `tsukuya` | 생성물 검수와 품질 확인 | `docs/validationChecklist.md`, 검수 기록 |
+| `tsukuya` | 생성물 검수와 품질 확인 | `docs/validation_checklist.md`, 검수 기록 |
 | `jaehyeon` | 백엔드, 인프라, RAG, 워크플로우 | `src/`, `alembic/`, 기술 문서, `projectState.json` |
 
 ### 핵심 규칙
@@ -177,10 +177,10 @@ claude --system-prompt prompts/be_jaehyeon_prompt.md \
 
 | 위치 | 규칙 |
 |------|------|
-| `docs/` 하위 문서 | `camelCase.md` (예: `serviceFlows.md`) |
+| `docs/` 하위 문서 | `snake_case.md` (예: `service_flows.md`) |
 | `src/` 하위 코드 | `snake_case.py` (파이썬 관례) |
 | `data/curated/` 산출물 | `snake_case.json` (예: `n5_grammar_chunks.json`) |
-| 다이어그램 | `camelCase.svg` |
+| 다이어그램 | `snake_case.svg` |
 | 상태 파일 | `projectState.json` (고정) |
 
 ### 7-2. 문서 본문
@@ -200,5 +200,5 @@ claude --system-prompt prompts/be_jaehyeon_prompt.md \
 > 향후 `projectState.json`으로 이전 예정
 
 - **`projectState.json` 스키마 확정**: 구조 정의 후 초기 파일 생성 (담당: 민석 + 재현)
-- **`docs/validationChecklist.md` 작성**: 츠쿠야 검수 체크리스트 별도 파일화 (담당: 츠쿠야)
+- **`docs/validation_checklist.md` 작성**: 츠쿠야 검수 체크리스트 별도 파일화 (담당: 츠쿠야)
 - **prompts 재작성**: docs 안정화 후 prompts에서 중복 내용 제거 (향후 별도 작업)

@@ -2,7 +2,7 @@
 
 > 최종 업데이트: 2026-04-19
 > 담당 축: **Decisions** — 무엇이 왜 확정되었는가
-> 관련 문서: `productOverview.md`, `serviceFlows.md`, `databaseSchema.md`, `apiEndpoints.md`
+> 관련 문서: `product_overview.md`, `service_flows.md`, `database_schema.md`, `api_endpoints.md`
 
 ---
 
@@ -16,7 +16,7 @@
 **이 문서에서 찾을 수 없는 것**
 - 아직 결정되지 않은 이슈 → 각 문서의 **미결 및 상태** 섹션
 - 현재 작업 상태 → `projectState.json` (예정)
-- 기술 구조 전체 그림 → `databaseSchema.md`, `implementationRoadmap.md`
+- 기술 구조 전체 그림 → `database_schema.md`, `implementation_roadmap.md`
 
 ---
 
@@ -85,10 +85,10 @@
 - 면접 답변용으로도 "데이터 품질 관리 체계"를 명확히 설명 가능 (포트폴리오 강점).
 
 **영향 범위:**
-- `dataPipeline.md` 1, 5장 (단일 진실 원천)
+- `data_pipeline.md` 1, 5장 (단일 진실 원천)
 - `prompts/de_sujin_prompt.md` (생성 담당)
 - `prompts/jp_tsukuya_prompt.md` (검수 담당)
-- 데이터 확보 워크플로우 전체 (`dataPipeline.md` 3장)
+- 데이터 확보 워크플로우 전체 (`data_pipeline.md` 3장)
 
 ---
 
@@ -181,7 +181,7 @@
 - 디버깅과 운영 확인이 수월해진다.
 
 **영향 범위:**
-- `databaseSchema.md` 13장
+- `database_schema.md` 13장
 
 ---
 
@@ -198,9 +198,9 @@
 - 학습은 복습/이어하기/약점 누적이 얽혀 있어 `user_id` 기준으로 일원화하는 것이 추적에 유리.
 
 **영향 범위:**
-- `serviceFlows.md` 1~3장
-- `databaseSchema.md` 3~4장 (구간 분리 + 승계 트랜잭션)
-- `apiEndpoints.md` 5-2 (`POST /api/v1/auth/link-session`)
+- `service_flows.md` 1~3장
+- `database_schema.md` 3~4장 (구간 분리 + 승계 트랜잭션)
+- `api_endpoints.md` 5-2 (`POST /api/v1/auth/link-session`)
 
 ---
 
@@ -214,7 +214,7 @@
 - 4지선다 객관식으로 고정하여 채점 복잡도를 낮춘다.
 
 **영향 범위:**
-- `serviceFlows.md` 1장
+- `service_flows.md` 1장
 - 진단 문제 seed 데이터 구성 기준
 
 ---
@@ -229,9 +229,9 @@
 - `weak_points`에 `anonymous_session_id` 컬럼을 두지 않아도 되어 스키마가 단순해진다.
 
 **영향 범위:**
-- `apiEndpoints.md` 6-4 (complete는 weak_points 쓰지 않음)
-- `apiEndpoints.md` 5-2 (link-session이 weak_points 일괄 생성)
-- `databaseSchema.md` 4-4장 (링크 트랜잭션 의사코드)
+- `api_endpoints.md` 6-4 (complete는 weak_points 쓰지 않음)
+- `api_endpoints.md` 5-2 (link-session이 weak_points 일괄 생성)
+- `database_schema.md` 4-4장 (링크 트랜잭션 의사코드)
 
 ---
 
@@ -245,8 +245,8 @@
 - 3회 모두 오답이면 일단 우회 후 복습 스케줄로 돌려 학습 피로를 낮춘다.
 
 **영향 범위:**
-- `apiEndpoints.md` 8-5 (`next_action = 'end'`)
-- `serviceFlows.md` 2장
+- `api_endpoints.md` 8-5 (`next_action = 'end'`)
+- `service_flows.md` 2장
 
 ---
 
@@ -260,7 +260,7 @@
 - 필터링/인덱스가 필요한 컬럼만 top-level이면 쿼리 성능과 유연성 양립.
 
 **영향 범위:**
-- `databaseSchema.md` 13장, 15장
+- `database_schema.md` 13장, 15장
 
 ---
 
@@ -274,7 +274,7 @@
 - 이중 키 운영으로 내부 안전성 + 외부 가독성 모두 확보.
 
 **영향 범위:**
-- `databaseSchema.md` 13장
+- `database_schema.md` 13장
 
 --- 
 

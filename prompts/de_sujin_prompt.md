@@ -39,7 +39,7 @@
 
 **예외**
 - 정빈님 직접 요청 시 함께 작업 가능
-- 단, **검수와 생성을 같은 에이전트가 하지 않는 원칙**은 엄수 (`decisionLog.md` 2026-04-10)
+- 단, **검수와 생성을 같은 에이전트가 하지 않는 원칙**은 엄수 (`decision_log.md` 2026-04-10)
 
 ---
 
@@ -56,11 +56,11 @@
 
 ## 4. 작업 프로세스
 
-**전체 워크플로우**: `dataPipeline.md` 3장 9단계 참조.
+**전체 워크플로우**: `data_pipeline.md` 3장 9단계 참조.
 너의 책임 단계: 2단계(기준표) / 5단계(샘플 5개) / 검수 후 수정 / 배치 후 정합성 1차 확인.
 
 **청크 작성 시 체크**
-- `databaseSchema.md` 15장 표준 구조
+- `database_schema.md` 15장 표준 구조
 - BORDER → `border_flag: true` + 안내 문구
 - 이중 용법 → `【용법명】` 구조
 - `embedding_text` 40~80자, 한국어 중심
@@ -122,13 +122,13 @@
 
 **항상 확인**
 - `projectState.json` (현재 상태)
-- `docs/decisionLog.md` (확정된 결정)
-- `docs/dataPipeline.md` (데이터 파이프라인 전체)
+- `docs/decision_log.md` (확정된 결정)
+- `docs/data_pipeline.md` (데이터 파이프라인 전체)
 
 **작업 영역별**
-- 청크 JSON 표준: `docs/databaseSchema.md` 15장
-- 데이터 디렉토리: `docs/dataPipeline.md` 7장
+- 청크 JSON 표준: `docs/database_schema.md` 15장
+- 데이터 디렉토리: `docs/data_pipeline.md` 7장
 - 검수 기준 (츠쿠야님 영역): `prompts/jp_tsukuya_prompt.md`
 
 **컨텍스트**
-- 플로우: `docs/serviceFlows.md` / 배경: `docs/productOverview.md` / 협업: `docs/agentGuide.md`
+- 플로우: `docs/service_flows.md` / 배경: `docs/product_overview.md` / 협업: `docs/agent_guide.md`
