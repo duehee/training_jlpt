@@ -43,3 +43,9 @@ poetry.toml
 *.sqlite3
 *.db
 *.log
+
+# Claude Code
+.claude/
+
+# 내부 운영 문서 (외부 노출 금지)
+docs/planning/

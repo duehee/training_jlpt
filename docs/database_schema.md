@@ -1,6 +1,6 @@
 # 데이터베이스 스키마
 
-> 최종 업데이트: 2026-04-19
+> 최종 업데이트: 2026-04-29
 > 담당 축: **How-internal** — 데이터를 어떻게 저장하는가
 > 관련 문서: `service_flows.md`, `api_endpoints.md`, `decision_log.md`
 
@@ -712,8 +712,6 @@ Alembic 기반 단계별 마이그레이션 권장 순서입니다.
 ## 미결 및 상태 (임시)
 > 향후 `projectState.json`으로 이전 예정
 
-- **`grammar_point_id` 포맷 규칙 최종 확정**: 예) `grammar_n5_001` vs `gp_n5_001` (담당: 수진 + 재현)
-- **진단 문제 저장소**: DB 테이블화 여부 (담당: 재현)
 - **`mastery_score` 계산식 확정**: EMA vs 단순 비율 vs 다른 방식 (담당: 재현)
 - **`weak_points.metadata` JSONB 스키마 표준화**: 패턴 키 구조 (담당: 수진 + 재현)
 - **벡터 인덱스 최종 선택**: IVFFlat vs HNSW (데이터 규모 확보 후 결정)

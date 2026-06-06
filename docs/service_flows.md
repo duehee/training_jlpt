@@ -1,6 +1,6 @@
 # 서비스 플로우
 
-> 최종 업데이트: 2026-04-19
+> 최종 업데이트: 2026-04-29
 > 담당 축: **What** — 사용자가 무엇을 경험하는가
 > 관련 문서: `product_overview.md`, `api_endpoints.md`, `database_schema.md`
 
@@ -57,7 +57,7 @@ JLPT 개인 학습 에이전트에서 **사용자가 경험하는 흐름**과 **
 **참조 다이어그램**: `docs/new_user_onboarding_flow.svg`
 
 **관련 문서**:
-- 진단 API 상세 → `api_endpoints.md` 3장
+- 진단 API 상세 → `api_endpoints.md` 6장
 - 익명/회원 데이터 구조 → `database_schema.md` 3장, 4~7장
 - 익명 → 로그인 데이터 승계 구현 → `database_schema.md` 4장
 
@@ -115,7 +115,7 @@ last_session 조회
 ```
 
 **관련 문서**:
-- 이어하기 API → `api_endpoints.md` 7장
+- 이어하기 API → `api_endpoints.md` 9장
 - `last_session` 테이블 → `database_schema.md` 12장
 
 ---

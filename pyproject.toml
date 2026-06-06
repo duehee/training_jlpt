@@ -36,6 +36,7 @@ dependencies = [
 
     # 데모 UI
     "streamlit>=1.36.0",
+    "openpyxl (>=3.1.5,<4.0.0)",
 ]
 
 [project.optional-dependencies]
