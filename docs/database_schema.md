@@ -1,8 +1,12 @@
 # 데이터베이스 스키마
 
-> 최종 업데이트: 2026-04-29
+> 최종 업데이트: 2026-06-08 (재설계 후 12 테이블 기준)
 > 담당 축: **How-internal** — 데이터를 어떻게 저장하는가
 > 관련 문서: `service_flows.md`, `api_endpoints.md`, `decision_log.md`
+>
+> ⭐ **단일 진실 정리본**: `docs/planning/session_4/be_jaehyeon/00_db_overview.md` (재현 작성, 2026-06-08, 실 DB 검증 통과). 본 문서는 docs/ 표준 참조용으로 핵심 사항만 정리. 컬럼 정의 세부 / 검증 상태 / 어댑터 계약은 00 참조.
+>
+> 재설계 변천: 구 `grammar_chunks` 10 테이블 → **`chunks` 12 테이블** — E-17 백지 재설계 + E-18 target lock 참조. 본 문서 본문은 일괄 정정 완료.
 
 ---
 
@@ -11,9 +15,9 @@
 **이 문서에서 찾을 수 있는 것**
 - PostgreSQL 버전 및 필수 extension → 1장
 - 공통 규칙 (PK, 시간, enum 등) → 2장
-- 전체 테이블 목록 (익명/회원 구간) → 3장
+- 전체 테이블 목록 (12 테이블, 콘텐츠/진단/학습/캐시) → 3장
 - **익명 → 로그인 데이터 승계 구현** → 4장
-- 테이블별 컬럼 정의 → 5장 ~ 14장
+- 테이블별 컬럼 정의 → 5장 ~ 14장 (도메인 9개 유지 + `chunks` / `comparison_pairs` / `diagnostic_questions`은 `00_db_overview.md` §4 참조)
   - `users` → 5장
   - `anonymous_sessions` → 6장
   - `diagnostic_sessions` → 7장
@@ -22,8 +26,10 @@
   - `learning_records` → 10장
   - `weak_points` → 11장
   - `last_session` → 12장
-  - `grammar_chunks` → 13장
+  - `chunks` → 13장 (구 `grammar_chunks`, point/compare/variant 통합)
   - `llm_response_cache` → 14장
+  - `comparison_pairs` (신설, seed) → `00_db_overview.md` §4-2
+  - `diagnostic_questions` (신설) → `00_db_overview.md` §4-5
 - **청크 JSON 구조 표준** → 15장
 - 인덱스 권장안 → 16장
 - 마이그레이션 순서 → 17장
@@ -91,29 +97,37 @@ services:
 
 ## 3. 전체 테이블 목록
 
-Phase 1에서 사용하는 10개 테이블입니다. **익명/회원 구간이 명확히 분리**됩니다.
+Phase 1에서 사용하는 **12개 테이블**입니다 (재설계 후, 2026-06-08). **콘텐츠 / 진단 / 학습 / 캐시 4 도메인**으로 분리.
 
-### 익명 구간 (로그인 전 진단 전용)
+### 콘텐츠 도메인 (재설계 핵심)
 | # | 테이블 | 용도 |
 |---|--------|------|
-| 1 | `anonymous_sessions` | 익명 세션 임시 상태 |
-| 2 | `diagnostic_sessions` | 진단 테스트 세션 |
-| 3 | `diagnostic_answers` | 진단 문항별 답안 |
+| 1 | `chunks` ⭐ | point/compare/variant 통합 청크 + 임베딩 (RAG 원본) |
+| 2 | `comparison_pairs` | 비교쌍 트리거 seed (left/right/cluster/star 단일 진실) |
 
-### 회원 구간 (로그인 이후)
+### 진단 도메인 (익명)
 | # | 테이블 | 용도 |
 |---|--------|------|
-| 4 | `users` | 회원 기준 정보 |
-| 5 | `learning_sessions` | 학습 세션 |
-| 6 | `learning_records` | 문법 포인트별 누적 학습 이력 |
-| 7 | `weak_points` | 사용자 취약 문법 누적 |
-| 8 | `last_session` | 이어하기 상태 |
+| 3 | `anonymous_sessions` | 익명 세션 임시 상태 |
+| 4 | `diagnostic_sessions` | 진단 테스트 세션 |
+| 5 | `diagnostic_questions` ★신설 | 진단 문제 seed |
+| 6 | `diagnostic_answers` | 진단 문항별 답안 |
 
-### 공용 리소스
+### 학습 도메인 (회원)
 | # | 테이블 | 용도 |
 |---|--------|------|
-| 9 | `grammar_chunks` | 문법/비교 청크 원본 + 임베딩 |
-| 10 | `llm_response_cache` | LLM 응답 캐시 |
+| 7 | `users` | 회원 기준 정보 |
+| 8 | `learning_sessions` | 학습 세션 |
+| 9 | `learning_records` | 문법 포인트별 누적 학습 이력 |
+| 10 | `weak_points` | 사용자 취약 문법 누적 |
+| 11 | `last_session` | 이어하기 상태 |
+
+### 캐시 도메인
+| # | 테이블 | 용도 |
+|---|--------|------|
+| 12 | `llm_response_cache` | LLM 응답 캐시 |
+
+> **taxonomy (L1·L2 분류)는 테이블이 아니라 앱 상수/reference** — retrieval 대상 아님.
 
 ---
 
@@ -427,7 +441,7 @@ with db.transaction():
 
 ---
 
-## 13. `grammar_chunks` ⭐ 핵심 테이블
+## 13. `chunks` ⭐ 핵심 테이블
 
 **목적**: 문법 포인트 및 비교 문법 청크를 저장하는 retrieval 원본 + 임베딩 테이블.
 
@@ -504,7 +518,7 @@ PG에서 content 업데이트 시:
 
 ## 15. 청크 JSON 구조 표준 ⭐
 
-`grammar_chunks.content` JSONB 필드의 **청크 타입별 표준 구조**입니다.
+`chunks.content` JSONB 필드의 **청크 타입별 표준 구조**입니다.
 
 ### 15-1. 문법 청크 (`chunk_type = 'grammar'`)
 
@@ -576,7 +590,7 @@ PG에서 content 업데이트 시:
 
 ### 15-3. `embedding_text` 작성 기준
 
-`grammar_chunks.embedding_text` 필드의 작성 규칙입니다.
+`chunks.embedding_text` 필드의 작성 규칙입니다.
 
 | 기준 | 내용 |
 |------|------|
@@ -612,15 +626,15 @@ CREATE INDEX idx_weak_points_user_gp
 CREATE INDEX idx_last_session_user ON last_session(user_id);
 
 -- 청크
-CREATE INDEX idx_chunks_level ON grammar_chunks(level);
-CREATE INDEX idx_chunks_type ON grammar_chunks(chunk_type);
-CREATE INDEX idx_chunks_gp ON grammar_chunks(grammar_point_id);
-CREATE INDEX idx_chunks_border ON grammar_chunks(border_flag);
-CREATE INDEX idx_chunks_source_status ON grammar_chunks(source_status);
+CREATE INDEX idx_chunks_level ON chunks(level);
+CREATE INDEX idx_chunks_type ON chunks(chunk_type);
+CREATE INDEX idx_chunks_gp ON chunks(grammar_point_id);
+CREATE INDEX idx_chunks_border ON chunks(border_flag);
+CREATE INDEX idx_chunks_source_status ON chunks(source_status);
 
 -- 복합 인덱스 (retrieval 최적화)
 CREATE INDEX idx_chunks_gp_level_type 
-  ON grammar_chunks(grammar_point_id, level, chunk_type);
+  ON chunks(grammar_point_id, level, chunk_type);
 
 -- 캐시
 CREATE INDEX idx_llm_cache_key ON llm_response_cache(cache_key);
@@ -633,13 +647,13 @@ Phase 1 후반, 청크 수량이 100개 이상 확보된 후 추가:
 ```sql
 -- IVFFlat (추천, 삽입/업데이트 빈도 낮을 때)
 CREATE INDEX idx_chunks_embedding 
-  ON grammar_chunks 
+  ON chunks 
   USING ivfflat (embedding vector_cosine_ops) 
   WITH (lists = 100);
 
 -- 또는 HNSW (추천, 쿼리 성능 우선 시)
 -- CREATE INDEX idx_chunks_embedding
---   ON grammar_chunks
+--   ON chunks
 --   USING hnsw (embedding vector_cosine_ops);
 ```
 
@@ -686,7 +700,7 @@ Alembic 기반 단계별 마이그레이션 권장 순서입니다.
 
 ### 17-3. Migration 3: 콘텐츠 + 캐시
 ```text
-1. grammar_chunks (embedding은 VECTOR(1536))
+1. chunks (embedding은 VECTOR(1536))
 2. llm_response_cache
 ```
 
@@ -698,7 +712,7 @@ Alembic 기반 단계별 마이그레이션 권장 순서입니다.
 
 ### 17-5. Migration 5 (후속): 벡터 인덱스
 ```text
-1. grammar_chunks.embedding 데이터 확보 후
+1. chunks.embedding 데이터 확보 후
 2. IVFFlat 인덱스 생성 (16-2장)
 ```
 
@@ -710,7 +724,7 @@ Alembic 기반 단계별 마이그레이션 권장 순서입니다.
 ---
 
 ## 미결 및 상태 (임시)
-> 향후 `projectState.json`으로 이전 예정
+> 단일 진실 = `project_summary.md` + `decision_log.md` + `glossary.md` + `planning/session_N/pm_minseok/summary.md`.
 
 - **`mastery_score` 계산식 확정**: EMA vs 단순 비율 vs 다른 방식 (담당: 재현)
 - **`weak_points.metadata` JSONB 스키마 표준화**: 패턴 키 구조 (담당: 수진 + 재현)

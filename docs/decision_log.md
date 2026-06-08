@@ -15,7 +15,7 @@
 
 **이 문서에서 찾을 수 없는 것**
 - 아직 결정되지 않은 이슈 → 각 문서의 **미결 및 상태** 섹션
-- 현재 작업 상태 → `projectState.json` (예정)
+- 현재 작업 상태 → `project_summary.md` + `planning/session_N/pm_minseok/summary.md`
 - 기술 구조 전체 그림 → `database_schema.md`, `implementation_roadmap.md`
 
 ---
@@ -1136,6 +1136,86 @@ ALTER TABLE grammar_chunks
 - #4 source_pool 혼재 → D-9
 - #5 glossary §9 connection_type stale → lead 갱신
 - #6 variant border 한글 `미결` → D-10
+
+---
+
+### [ARCH] E-18 — 재현 백지 재설계 target 12 테이블 lock + ORM/Alembic 검증 통과 (2026-06-08)
+
+> 정빈님 직접 위임으로 재현이 §7 6 논점을 단독 lock 후 target 설계 + ORM + Alembic 마이그레이션 + 컨테이너 검증까지 일괄 완료. 본 항목은 lead 사후 등록 (재현 사후 보고 4건 기반).
+
+**정빈님 인용 (2026-06-06, 재현 채널 직접 대화 사후 보고):**
+> "재현이 깔끔한 구조+데이터형식 문서 만들고 DB까지 짜두라."
+
+**결정:**
+
+#### 1. target 12 테이블 lock (11 → 12)
+| # | 테이블 | 도메인 | 비고 |
+|---|---|---|---|
+| 1 | `chunks` ⭐ | 콘텐츠 | point/compare/variant 통합 + 임베딩 (RAG 원본) |
+| 2 | `comparison_pairs` | 콘텐츠 | 비교쌍 트리거 seed (신설, +1) |
+| 3 | `anonymous_sessions` | 진단 | 익명 세션 (계승) |
+| 4 | `diagnostic_sessions` | 진단 | 진단 흐름 (계승) |
+| 5 | `diagnostic_questions` | 진단 | 진단 문제 seed (D-6 신설) |
+| 6 | `diagnostic_answers` | 진단 | 문항별 답안 (계승) |
+| 7 | `users` | 학습 | 회원 (계승) |
+| 8 | `learning_sessions` | 학습 | 학습 흐름 (계승) |
+| 9 | `learning_records` | 학습 | 숙련도 누적 (계승) |
+| 10 | `weak_points` | 학습 | 취약 포인트 (계승) |
+| 11 | `last_session` | 학습 | 이어하기 (계승) |
+| 12 | `llm_response_cache` | 캐시 | LLM 캐시 (계승) |
+
+#### 2. 단일 진실 정리본
+**`docs/planning/session_4/be_jaehyeon/00_db_overview.md`** (재현 작성, 2026-06-08). 변천 기록 (`03_redesign_sketch` / `04_target_db_design` / `05_schema_reference`)은 보존.
+
+#### 3. §7 6 논점 lock (재현 자율 lock, 정빈님 위임 확정)
+- 테이블명 → `chunks`
+- 단일 테이블 흡수 → point/compare/variant
+- `comparison_pairs` seed 분리 (트리거 진실)
+- taxonomy = 앱 상수 (테이블 아님)
+- 진단 문제 = DB 테이블 (`diagnostic_questions`)
+- 기존 문서 처리 = 변천 기록 보존
+
+#### 4. ORM 12 + Alembic 골격 + 초기 마이그레이션
+- `src/db/models/{base, content, diagnostic, learning, cache}.py`
+- `src/db/migrations/versions/0001_initial_schema.py` (revision `0001`, `vector` + `pgcrypto` 확장 포함)
+- `tests/test_models.py` (단위 테스트 5/5 통과)
+
+#### 5. 컨테이너 검증 통과
+- 임시 pgvector/pg16 컨테이너 — metadata ↔ DB 컬럼 전수 일치
+- 타입 (embedding=vector, body=jsonb) / FK 9건 (순환 2, use_alter) / CHECK 4 / 부분 인덱스 정상
+- 자기 대조 insert (left == right) 통과 / 잘못된 chunk_type 거부 정상
+- 검증 컨테이너 제거 완료 (프로젝트 docker-compose 미변경)
+
+#### 6. 어댑터 계약 5선 (재설계 핵심)
+1. `source_pool` `"SRC-01,02,..."` → `["SRC-01", ...]` JSON 배열 확장 (D-9 자연 해소)
+2. `comparison_pair_ids` = `comparison_pairs` seed에서 단방향 도출 (l3 저장 X, 양방향 수동 동기화 제거)
+3. variant `border_candidate` `"미결"` → `NULL` (D-10 자연 소멸 — variant 전부 FALSE 확정)
+4. `star_weight` `"3star"` → SMALLINT `3`
+5. `taxonomy` `item_count` 재계산 (드리프트 차단, F2 인풋 해소)
+
+#### 7. 잔여 게이트 (정빈님 결정 대기)
+- dev 의존성 추가 (`poetry add --group dev pytest pytest-asyncio mypy ruff greenlet`) + pyproject 선언 보강 (CLAUDE.md §[VERIFY] 정합)
+- `alembic upgrade head` 실 적용
+- 어댑터 적재 `scripts/load_chunks.py` 진입 (수진 후속 동결 완료 ✅, 즉시 가능)
+
+**근거:**
+- 재현 readiness `01_readiness_check.md` §5 D-1~D-8 + 워크숍 plan `02_workshop_plan.md` D-9·D-10 + 백지 재설계 원칙 3건 (level 1급 / xlsx 고정입력 / 단일 진실 + 파생 뷰) → target 설계로 통합.
+- 도메인 9개 테이블은 `database_schema.md §5~14` 설계 건강 → 계승 (재설계 범위 = chunks + 어댑터 + 레벨 일반화에 한정).
+- xlsx F1·F2 드리프트 클래스 → 어댑터 정규화로 구조적 제거 (재현 03 인풋 3 = 단일 진실 + 파생 뷰 원칙).
+
+**영향 범위:**
+- `database_schema.md` 전면 갱신 (`grammar_chunks` → `chunks` 12 테이블, 재현 00 입력) — lead 처리 (본 ack 묶음)
+- `glossary.md §12` MVP 11 → 12 정정 — ✅ 완료
+- `implementation_roadmap.md` 어댑터 명칭 + 스크립트 명칭 + N5 84 → 109 갱신 — lead 처리
+- `data_pipeline.md` JSON 흐름 → xlsx 어댑터 갱신 — lead 처리
+- `local_dev_setup.md` 스크립트 명칭 갱신 — lead 처리
+- `project_summary.md §0·§2-3` 재설계 범위 좁힘 반영 — lead 처리 (본 ack 묶음)
+
+**Cross-track:**
+- D-9 (source_pool JSON 통일) = 어댑터 정규화 5선에 포함, 자연 해소
+- D-10 (variant border 3-state) = 츠쿠야 §6 판정으로 variant 전부 FALSE 확정, 자연 소멸 (단 `border_flag BOOLEAN NULL` 허용은 향후 확장 여지로 유지)
+- D-6 (`diagnostic_questions` 추가) = 본 target에 신설로 반영, `database_schema.md` 패치 자동 흡수
+- D-7 (`embedding_text` 길이 스펙) = 본 target에 직접 반영 (point 150~270 / variant 120~150 / compare 50~100, CHECK 미추가)
 
 ---
 

@@ -1,8 +1,14 @@
 # 구현 로드맵
 
-> 최종 업데이트: 2026-04-19
+> 최종 업데이트: 2026-06-08 (재설계 후 chunks 12 테이블 + 어댑터 패턴 반영)
 > 담당 축: **When** — 무엇을 어떤 순서로 구현하는가
 > 관련 문서: `service_flows.md`, `database_schema.md`, `api_endpoints.md`
+>
+> 재설계 변경 (E-18, 2026-06-08):
+> - 구 `chunks` → **`chunks`** (point/compare/variant 통합) + `comparison_pairs` seed + `diagnostic_questions` 신설
+> - 구 `load_chunks.py` / `embed_chunks.py` → **어댑터 패턴** `scripts/load_chunks.py` (xlsx 정규화 5선 + DB 적재) + `scripts/embed_chunks.py`
+> - 데이터 입력 = `data/{level}/*.xlsx` (xlsx 고정 입력 계약, JSON 흐름 폐지)
+> - 단일 진실: `docs/planning/session_4/be_jaehyeon/00_db_overview.md`
 
 ---
 
@@ -121,8 +127,8 @@ training_jlpt/
 │   │   └── nodes/                   retrieve/explain/quiz/branch
 │   └── scripts/
 │       ├── seed_diagnosis_questions.py
-│       ├── import_grammar_chunks.py
-│       └── embed_grammar_chunks.py
+│       ├── load_chunks.py
+│       └── embed_chunks.py
 ├── data/
 │   ├── raw/                         원본 데이터
 │   ├── curated/                     수진 검수 완료
@@ -133,8 +139,7 @@ training_jlpt/
 │   └── integration/
 ├── docs/
 ├── docker-compose.yml
-├── pyproject.toml
-└── projectState.json                (예정)
+└── pyproject.toml
 ```
 
 ### 네이밍 참고
@@ -230,7 +235,7 @@ curl -X POST /api/v1/sessions/anonymous
 ### 범위
 - [ ] Alembic Migration 3: 콘텐츠 + 캐시
 - [ ] Alembic Migration 4: 약점 + 인덱스
-- [ ] ORM 모델 추가 (`learning_*`, `weak_points`, `last_session`, `grammar_chunks`, `llm_response_cache`)
+- [ ] ORM 모델 추가 (`learning_*`, `weak_points`, `last_session`, `chunks`, `llm_response_cache`)
 - [ ] API 구현 (`api_endpoints.md` 7, 8, 9장):
   - [ ] `GET /api/v1/recommendations/learning-path`
   - [ ] `POST /api/v1/learning/sessions`
@@ -261,8 +266,8 @@ curl -X POST /api/v1/sessions/anonymous
 하드코딩 설명을 **실제 retrieval 기반**으로 전환.
 
 ### 범위
-- [ ] `grammar_chunks` 데이터 import 스크립트: `src/scripts/import_grammar_chunks.py`
-- [ ] 임베딩 생성 스크립트: `src/scripts/embed_grammar_chunks.py`
+- [ ] `chunks` 데이터 import 스크립트: `src/scripts/load_chunks.py`
+- [ ] 임베딩 생성 스크립트: `src/scripts/embed_chunks.py`
   - OpenAI text-embedding-3-small 호출
   - 배치 처리 (비용 + 속도)
   - `embedding_text` 변경 시 재임베딩 로직
@@ -276,14 +281,14 @@ curl -X POST /api/v1/sessions/anonymous
 - [ ] `/learning/sessions/{id}/question` 하드코딩 제거 → LLM 생성
 
 ### 완료 기준
-- `grammar_chunks` 테이블에 N5 84개 로드됨
+- `chunks` 테이블에 N5 109 base + 3 variant + 25 비교쌍 = **137건** 로드됨 (재설계 후 확정)
 - 모든 청크에 `embedding` 컬럼 값 존재
 - 벡터 인덱스 생성 (Migration 5)
 - 문법 설명이 DB 청크 기반으로 반환됨 (하드코딩 아님)
 - LLM 캐시 히트 시 `cached: true` 반환
 
 ### 의존성
-- **수진 → 재현 핸드오프**: N5 문법 청크 JSON 완성 (`data/curated/n5_grammar_chunks.json`)
+- **수진 → 재현 핸드오프**: N5 운영 데이터 (`data/n5/n5_master.xlsx` + `data/n5/n5_comparison.xlsx` + `data/schema/*.md`) — 2026-06-06 완료
 - **츠쿠야**: 청크 데이터 샘플링 검수
 - **재현**: 임베딩 파이프라인 + RAG 구현
 
@@ -349,7 +354,7 @@ curl -X POST /api/v1/sessions/anonymous
 
 | From → To | 산출물 경로 | 포맷 |
 |-----------|-------------|------|
-| 수진 → 재현 | `data/curated/n5_grammar_chunks.json` | JSON 배열 (15장 구조) |
+| 수진 → 재현 | `data/n5/n5_master.xlsx` + `data/n5/n5_comparison.xlsx` + `data/schema/*.md` | xlsx 5+2 시트 (어댑터 정규화 입력) |
 | 수진 → 재현 | `data/curated/n5_compare_chunks.json` | JSON 배열 |
 | 수진 → 재현 | `data/curated/diagnosis_questions.json` | JSON 배열 (seed용) |
 | 츠쿠야 → 팀 | `docs/validation_checklist.md` | 마크다운 체크리스트 |
@@ -377,7 +382,7 @@ Stage 1 착수 전에 반드시 확정해야 할 항목입니다.
 ---
 
 ## 미결 및 상태 (임시)
-> 향후 `projectState.json`으로 이전 예정
+> 단일 진실 = `project_summary.md` + `decision_log.md` + `glossary.md` + `planning/session_N/pm_minseok/summary.md`.
 
 - **현재 단계**: Stage 0 착수 준비 (기술 스택 확정 완료, DB 스키마 확정 완료)
 - **병목**: 재현의 배치 생성 스크립트 + 수진의 N5 데이터 완성

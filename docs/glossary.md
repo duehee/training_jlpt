@@ -157,7 +157,7 @@
 | **Stage 0** | 인프라 골격 — Docker 환경 / FastAPI 엔트리 / Alembic α baseline |
 | **Stage 1+** | 후속 Stage (RAG 파이프라인 / 진단 워크플로우 등). `docs/implementation_roadmap.md` 참조 |
 | **session_N** | 세션 번호. lead 자동 증가 금지, 정빈님 수동 부여 |
-| **MVP 11 테이블** | DB MVP 설계. 트랙 1 워크숍 대상 (세션 4 또는 이후 진입) |
+| **MVP 12 테이블** | DB MVP 설계 (재설계 후 확정, 2026-06-08). `chunks` 통합 + `comparison_pairs` seed + `diagnostic_questions` 신설 + 도메인 9 계승. 단일 진실 = `docs/planning/session_4/be_jaehyeon/00_db_overview.md` |
 | **α baseline** | Alembic 빈 baseline (스키마 0 상태) |
 
 ---

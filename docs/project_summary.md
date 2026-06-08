@@ -64,7 +64,7 @@ N5~N3 진단 + 학습 기록 (프로덕션 수준). N2/N1은 Phase 2+ 범위.
   PostgreSQL 16 + pgvector
     ↓
 [RAG 진단]
-  text-embedding-3-small + grammar_chunks
+  text-embedding-3-small + chunks (point/compare/variant 통합)
     ↓
 [학습 워크플로우]
   LangGraph + 간격 반복
@@ -181,7 +181,7 @@ N5~N3 진단 + 학습 기록 (프로덕션 수준). N2/N1은 Phase 2+ 범위.
 | E-7 | DATA | 이형태 서픽스 방식 (`_informal` 등) |
 | E-8 | DATA | だけ/しか, から/ので → ★★★ 승급 |
 | E-9 | DATA | comparison_pair = 비교 청크 생성 트리거 |
-| E-10 | DATA | E-6 적용 후 비교쌍 = 22쌍 (해석 A) |
+| E-10 | DATA | E-6 적용 후 비교쌍 = 22쌍 (해석 A, 이후 E-16 +3으로 최종 25쌍) |
 | E-11 | DATA | variant → 별도 시트 `variant_chunks` |
 | E-12 | DATA | 마스터 105 → 109 (5건 추가, 정정 후) |
 | E-13 | PROCESS | xlsx 분리 = `n5_master.xlsx` (5시트) + `n5_comparison.xlsx` (2시트) |

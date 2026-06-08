@@ -179,7 +179,7 @@ last_session 조회
 ---
 
 ## 미결 및 상태 (임시)
-> 향후 `projectState.json`으로 이전 예정
+> 단일 진실 = `project_summary.md` + `decision_log.md` + `glossary.md` + `planning/session_N/pm_minseok/summary.md`.
 
 - **Phase 1 인증 방식**: 닉네임 기반 간이 로그인 vs 정식 이메일 로그인 (담당: 민석)
 - **재진단 허용 정책**: Phase 1 포함 여부 (담당: 민석)

@@ -247,10 +247,10 @@ poetry run alembic revision --autogenerate -m "add_weak_points_table"
 poetry run python src/scripts/seed_diagnosis_questions.py
 
 # 문법 청크 import
-poetry run python src/scripts/import_grammar_chunks.py
+poetry run python scripts/load_chunks.py
 
 # 임베딩 생성
-poetry run python src/scripts/embed_grammar_chunks.py
+poetry run python scripts/embed_chunks.py
 ```
 
 ### 5-5. DataGrip으로 DB 확인
@@ -386,7 +386,7 @@ sa.Column('embedding', Vector(1536), nullable=True)
 
 **해결**:
 - 배치 크기를 줄이고 sleep 넣기.
-- `src/scripts/embed_grammar_chunks.py`에서 `batch_size`와 `sleep_seconds` 조정.
+- `scripts/embed_chunks.py`에서 `batch_size`와 `sleep_seconds` 조정.
 
 ### 7-6. Docker 볼륨 권한 문제 (Linux)
 
@@ -400,7 +400,7 @@ sudo chown -R 999:999 ./data/postgres
 ---
 
 ## 미결 및 상태 (임시)
-> 향후 `projectState.json`으로 이전 예정
+> 단일 진실 = `project_summary.md` + `decision_log.md` + `glossary.md` + `planning/session_N/pm_minseok/summary.md`.
 
 - **`.env.example` 파일 작성 필요**: 본 문서 4장 기준으로 생성 (담당: 재현)
 - **Windows WSL2 가이드**: 필요 시 별도 섹션 추가 검토

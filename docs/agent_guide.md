@@ -35,16 +35,21 @@
 
 정보가 충돌할 때는 아래 순서로 판단합니다.
 
-1. `projectState.json` (예정) — 현재 작업 상태
+1. `docs/project_summary.md` — 프로젝트 전체 현황 (단일 진실 출처)
 2. `docs/decision_log.md` — 확정된 의사결정
-3. `docs/implementation_roadmap.md` — 구현 순서
-4. `docs/database_schema.md`, `docs/api_endpoints.md` — 기술 계약
-5. `docs/service_flows.md`, `docs/product_overview.md` — 제품 맥락
-6. `docs/local_dev_setup.md` — 로컬 환경
-7. `CLAUDE.md` — 전역 코딩 규칙
+3. `docs/glossary.md` — 약어 / ID / 운영 용어
+4. `docs/planning/session_N/pm_minseok/summary.md` — 세션별 운영
+5. `docs/implementation_roadmap.md` — 구현 순서
+6. `docs/database_schema.md`, `docs/api_endpoints.md` — 기술 계약
+7. `docs/service_flows.md`, `docs/product_overview.md` — 제품 맥락
+8. `docs/local_dev_setup.md` — 로컬 환경
+9. `CLAUDE.md` — 프로젝트 도메인 + 팀 운영 규칙
+10. `AGENTs.md` — 공통 에이전트 행동 규칙
 
-`projectState.json`은 **현재 작업 상태**의 기준입니다.
+`project_summary.md`는 **현재 상태와 진행 누적**의 기준입니다.
 `decision_log.md`는 **확정 의사결정**의 기준입니다.
+
+> 구 `projectState.json`은 2026-06-06 세션 4에서 stale 누적으로 삭제. 대체 = 위 1~4 (project_summary + decision_log + glossary + session summary).
 
 ---
 
@@ -52,27 +57,34 @@
 
 ```
 training_jlpt/
-├── projectState.json              공유 상태 파일 (예정)
-├── CLAUDE.md                      전역 코딩 규칙 / 재현 페르소나 가드레일
+├── CLAUDE.md                      프로젝트 도메인 + 팀 운영 규칙
+├── AGENTs.md                      공통 에이전트 행동 규칙
 ├── docs/
+│   ├── project_summary.md          프로젝트 전체 현황 (단일 진실)
+│   ├── decision_log.md             확정 의사결정 기록
+│   ├── glossary.md                 약어 / ID / 운영 용어
 │   ├── agent_guide.md              에이전트 운영 가이드 (이 문서)
 │   ├── product_overview.md         제품 배경과 사용자 문제
 │   ├── service_flows.md            서비스 플로우와 Phase 범위
 │   ├── implementation_roadmap.md   구현 순서와 Stage 상세
 │   ├── database_schema.md          DB 스키마
 │   ├── api_endpoints.md            API 계약
-│   ├── decision_log.md             확정 의사결정 기록
-│   ├── local_dev_setup.md           로컬 개발 환경 가이드
+│   ├── data_pipeline.md            데이터 파이프라인
+│   ├── local_dev_setup.md          로컬 개발 환경 가이드
+│   ├── planning/                   세션별 산출물 (session_1 ~ session_N)
 │   ├── new_user_onboarding_flow.svg
 │   └── core_learning_agent_flow.svg
 ├── prompts/
-│   ├── AGENTs.md                  공통 하네스 규칙
-│   ├── be_jaehyeon_prompt.md      재현 (AI + 백엔드 + 인프라)
+│   ├── be_jaehyeon_prompt.md      재현 (Senior Backend / AI Engineer)
 │   ├── de_sujin_prompt.md         수진 (데이터)
-│   ├── jp_tsukuya_prompt.md       츠쿠야 (검증)
-│   └── pm_minseok_prompt.md       민석 (PM)
-├── data/                          데이터 산출물
-├── src/                           애플리케이션 코드
+│   ├── jp_tsukuya_prompt.md       츠쿠야 (검증 / 일본어 native)
+│   ├── pm_minseok_prompt.md       민석 (PM / PO Lead)
+│   └── _spawn_templates/          팀 세션 spawn 템플릿
+├── data/                          운영 데이터 (xlsx + schema md)
+│   ├── n5/                         N5 운영 진실 (xlsx)
+│   └── schema/                     xlsx 컬럼 명세
+├── scripts/                       일회성 데이터 생성 / 시드 스크립트
+├── src/                           애플리케이션 코드 (런타임)
 ├── tests/                         테스트
 ├── docker-compose.yml
 └── pyproject.toml
@@ -84,20 +96,23 @@ training_jlpt/
 
 | 문서 | 담당 축 | 갱신 기준 |
 |------|---------|----------|
-| `projectState.json` (예정) | 현재 상태 | 작업 상태가 변할 때 |
+| `project_summary.md` | 프로젝트 전체 현황 | 세션 마무리 시 evolve (lead 책임) |
 | `decision_log.md` | 확정 결정 | 결정이 확정될 때 (삭제 없음) |
+| `glossary.md` | 용어 / ID / 운영 약어 | 운영 정정 도착 시 (lead 책임) |
+| `planning/session_N/pm_minseok/summary.md` | 세션별 운영 | 세션 종료 시 (lead 책임) |
 | `implementation_roadmap.md` | 구현 순서 | Stage 범위가 바뀔 때 |
 | `product_overview.md` | 제품 배경 | 제품 방향이 바뀔 때 |
 | `service_flows.md` | 사용자 흐름 | 플로우가 바뀔 때 |
 | `database_schema.md` | DB 스키마 | 스키마가 바뀔 때 |
 | `api_endpoints.md` | API 계약 | 엔드포인트가 바뀔 때 |
 | `local_dev_setup.md` | 로컬 환경 | 인프라/도구가 바뀔 때 |
+| `data_pipeline.md` | 데이터 파이프라인 | 어댑터 / 적재 흐름이 바뀔 때 |
 
 ### 핵심 원칙
 
 - **한 사실은 한 문서에만** (SSOT: Single Source of Truth).
 - 개요 문서에 임시 작업 상태를 적지 않습니다.
-- 상태성 정보는 `projectState.json`에 둡니다 (예정).
+- 상태성 정보는 `project_summary.md` + `planning/session_N/pm_minseok/summary.md`에 둡니다.
 - 번복되는 결정은 `decision_log.md`에 **새 항목**으로 추가하고 기존 항목은 삭제하지 않습니다.
 
 ---
@@ -106,26 +121,25 @@ training_jlpt/
 
 ### 4-1. 시작할 때
 
-1. `projectState.json` 읽기 (예정)
-2. 자신의 `agents.{id}` 블록 확인
-3. `handoffQueue`, `openIssues`, `deliverables` 확인
+1. `project_summary.md` 읽기 (프로젝트 전체 현황)
+2. 자신의 `planning/session_N/{teammate_name}/` 디렉터리 확인
+3. 최근 `pm_minseok/summary.md`에서 핸드오프 / 미결 / 산출물 확인
 4. 현재 작업에 필요한 문서만 선별적으로 읽기 (각 문서의 빠른 참조 섹션 활용)
 
 ### 4-2. 끝낼 때
 
-최소한 아래를 갱신합니다 (예정).
+세션 종료 시 lead가 일괄 갱신합니다.
 
-- `agents.{id}.status`
-- `agents.{id}.currentTask`
-- `agents.{id}.nextAction`
-- `meta.lastUpdated`
+- `decision_log.md` — 새 결정 추가
+- `planning/session_N/pm_minseok/summary.md` — 세션 요약 + 팀원 핸드오프
+- `project_summary.md` — 프로젝트 전체 현황 evolve
+- `glossary.md` — 새 용어 / 운영 정정 추가
+- `CLAUDE.md §과거 실패` — 새 실패 규칙 통합 (lead 단독 책임)
 
-필요 시 함께 갱신합니다.
+팀원은 다음을 자기 산출물 디렉터리에 정리합니다.
 
-- `handoffQueue`
-- `openIssues`
-- `deliverables`
-- `decision_log.md`
+- 본 세션 산출물 (자기 도메인)
+- 다음 세션 핸드오프 (필요 시)
 
 ### 4-3. 핸드오프 시
 
@@ -139,10 +153,10 @@ training_jlpt/
 
 | 에이전트 | 주 역할 | 주로 갱신하는 항목 |
 |---------|--------|-------------------|
-| `minseok` | 우선순위, 승인, 범위 확정 | `decision_log.md`, `projectState.json` 의 승인 항목 |
-| `sujin` | 문법 데이터 작성 | `data/curated/`, `projectState.json` |
-| `tsukuya` | 생성물 검수와 품질 확인 | `docs/validation_checklist.md`, 검수 기록 |
-| `jaehyeon` | 백엔드, 인프라, RAG, 워크플로우 | `src/`, `alembic/`, 기술 문서, `projectState.json` |
+| `pm_minseok` | PM Lead — 우선순위 / 승인 / 범위 / 운영 | `decision_log.md`, `glossary.md`, `project_summary.md`, `planning/session_N/pm_minseok/summary.md` |
+| `de_sujin` | 데이터 엔지니어 — 수집 / 청킹 / 메타데이터 | `data/{level}/*.xlsx`, `data/schema/*.md`, `planning/session_N/de_sujin/` |
+| `jp_tsukuya` | QA / 일본어 native 검수 | `planning/session_N/jp_tsukuya/` (검수 기록) |
+| `be_jaehyeon` | Senior Backend / AI Engineer (RAG / FastAPI / Alembic / Docker) | `src/`, `alembic/`, 기술 문서, `planning/session_N/be_jaehyeon/` |
 
 ### 핵심 규칙
 
@@ -161,13 +175,15 @@ training_jlpt/
 
 ```
 claude --system-prompt prompts/de_sujin_prompt.md \
-  "projectState.json을 읽고 현재 작업 상태를 확인한 뒤 작업을 이어가. 완료 후 projectState.json을 업데이트해."
+  "project_summary.md와 최근 session_N/pm_minseok/summary.md를 읽고 현재 작업 상태를 확인한 뒤 작업을 이어가."
 ```
 
 ```
 claude --system-prompt prompts/be_jaehyeon_prompt.md \
-  "projectState.json을 읽고 nextAction 기준으로 작업 시작. 완료 후 projectState.json과 관련 문서를 업데이트해."
+  "project_summary.md를 읽고 다음 단계 (§9) 기준으로 작업 시작. 완료 후 관련 기술 문서를 업데이트해."
 ```
+
+> 본 프로젝트는 Claude Code Agent Teams 모드를 사용합니다. 팀 세션 시작 시 `prompts/_spawn_templates/kickoff.md`를 사용하세요. 자세한 운영 규칙은 `CLAUDE.md §[TEAM]` 참조.
 
 ---
 
@@ -179,9 +195,10 @@ claude --system-prompt prompts/be_jaehyeon_prompt.md \
 |------|------|
 | `docs/` 하위 문서 | `snake_case.md` (예: `service_flows.md`) |
 | `src/` 하위 코드 | `snake_case.py` (파이썬 관례) |
-| `data/curated/` 산출물 | `snake_case.json` (예: `n5_grammar_chunks.json`) |
+| `data/{level}/` 운영 데이터 | `snake_case.xlsx` (예: `n5_master.xlsx`, `n5_comparison.xlsx`) |
+| `data/schema/` 명세 | `snake_case.md` (예: `n5_master_schema.md`) |
+| `scripts/` 일회성 스크립트 | `snake_case.py` (예: `generate_n5_xlsx.py`) |
 | 다이어그램 | `snake_case.svg` |
-| 상태 파일 | `projectState.json` (고정) |
 
 ### 7-2. 문서 본문
 
@@ -197,8 +214,7 @@ claude --system-prompt prompts/be_jaehyeon_prompt.md \
 ---
 
 ## 미결 및 상태 (임시)
-> 향후 `projectState.json`으로 이전 예정
+> 단일 진실 = `project_summary.md` + `decision_log.md` + `glossary.md` + `planning/session_N/pm_minseok/summary.md`. (구 `projectState.json`은 2026-06-06 세션 4에서 stale 누적으로 삭제.)
 
-- **`projectState.json` 스키마 확정**: 구조 정의 후 초기 파일 생성 (담당: 민석 + 재현)
-- **`docs/validation_checklist.md` 작성**: 츠쿠야 검수 체크리스트 별도 파일화 (담당: 츠쿠야)
+- **`docs/validation_checklist.md` 작성**: 츠쿠야 검수 체크리스트 별도 파일화 (담당: 츠쿠야, 우선순위 후순위 — 현재는 `planning/session_N/jp_tsukuya/` 안에 검수 산출물로 누적)
 - **prompts 재작성**: docs 안정화 후 prompts에서 중복 내용 제거 (향후 별도 작업)
