@@ -1,0 +1,112 @@
+[
+  {
+    "question_key": "q_n5_001",
+    "level": "N5",
+    "grammar_point_id": "grammar_n5_002",
+    "stem": "昨日、公園で男の人___倒れていました。（　）に入る正しい助詞を選んでください。",
+    "stem_furigana": "<ruby>昨日<rt>きのう</rt></ruby>、<ruby>公園<rt>こうえん</rt></ruby>で<ruby>男<rt>おとこ</rt></ruby>の<ruby>人<rt>ひと</rt></ruby>___<ruby>倒<rt>たお</rt></ruby>れていました。（　）に<ruby>入<rt>はい</rt></ruby>る<ruby>正<rt>ただ</rt></ruby>しい<ruby>助詞<rt>じょし</rt></ruby>を<ruby>選<rt>えら</rt></ruby>んでください。",
+    "stem_ko": "어제 공원에서 남자 ___ 쓰러져 있었습니다. (괄호에 들어갈 올바른 조사를 고르세요.)",
+    "choices": [{"key": "A", "text": "は", "text_ko": "은/는"}, {"key": "B", "text": "が", "text_ko": "이/가"}, {"key": "C", "text": "を", "text_ko": "을/를"}, {"key": "D", "text": "も", "text_ko": "도"}],
+    "correct_choice": "B",
+    "explanation_ko": "が는 새로운 정보(신정보)를 처음 도입할 때 사용합니다. \"쓰러져 있는 남자\"는 처음 등장하는 신정보이므로 が가 자연스럽습니다. は를 쓰면 이미 알고 있는 정보처럼 들려 어색합니다."
+  },
+  {
+    "question_key": "q_n5_002",
+    "level": "N5",
+    "grammar_point_id": "grammar_n5_005",
+    "stem": "毎朝、家の近くの公園___ジョギングをしています。",
+    "stem_furigana": "<ruby>毎朝<rt>まいあさ</rt></ruby>、<ruby>家<rt>いえ</rt></ruby>の<ruby>近<rt>ちか</rt></ruby>くの<ruby>公園<rt>こうえん</rt></ruby>___ジョギングをしています。",
+    "stem_ko": "매일 아침, 집 근처 공원___ 조깅을 하고 있습니다.",
+    "choices": [{"key": "A", "text": "に", "text_ko": "에(존재·도착)"}, {"key": "B", "text": "へ", "text_ko": "(으)로"}, {"key": "C", "text": "から", "text_ko": "에서·부터"}, {"key": "D", "text": "で", "text_ko": "에서(동작 장소)"}],
+    "correct_choice": "D",
+    "explanation_ko": "で는 동작·행위가 이루어지는 장소를 나타냅니다. に는 존재 위치(います/あります)나 이동 도착점을 나타냅니다. 조깅하는 행위가 이루어지는 장소이므로 で가 맞습니다."
+  },
+  {
+    "question_key": "q_n5_003",
+    "level": "N5",
+    "grammar_point_id": "grammar_n5_081",
+    "stem": "朝ごはんを食べ___、学校へ行きます。",
+    "stem_furigana": "<ruby>朝<rt>あさ</rt></ruby>ごはんを<ruby>食<rt>た</rt></ruby>べ___、<ruby>学校<rt>がっこう</rt></ruby>へ<ruby>行<rt>い</rt></ruby>きます。",
+    "stem_ko": "아침밥을 먹___, 학교에 갑니다.",
+    "choices": [{"key": "A", "text": "た", "text_ko": "~했다(완료)"}, {"key": "B", "text": "ます", "text_ko": "~합니다(정중)"}, {"key": "C", "text": "て", "text_ko": "~하고(서)(순차)"}, {"key": "D", "text": "ながら", "text_ko": "~하면서(동시)"}],
+    "correct_choice": "C",
+    "explanation_ko": "て형은 동작의 순서(\"~하고 나서\")를 연결할 때 사용합니다. \"밥을 먹고 학교에 간다\" = 食べて→行きます. ながら는 동시동작(\"먹으면서 간다\")으로 의미가 다릅니다."
+  },
+  {
+    "question_key": "q_n5_004",
+    "level": "N5",
+    "grammar_point_id": "grammar_n5_023",
+    "stem": "A:「田中さんは今どこにいますか。」B:「今、電話___ので、少し待ってください。」",
+    "stem_furigana": "A:「<ruby>田中<rt>たなか</rt></ruby>さんは<ruby>今<rt>いま</rt></ruby>どこにいますか。」B:「<ruby>今<rt>いま</rt></ruby>、<ruby>電話<rt>でんわ</rt></ruby>___ので、<ruby>少<rt>すこ</rt></ruby>し<ruby>待<rt>ま</rt></ruby>ってください。」",
+    "stem_ko": "A: '다나카 씨는 지금 어디에 있습니까?' B: '지금 전화 ___, 잠시 기다려 주세요.'",
+    "choices": [{"key": "A", "text": "した", "text_ko": "했다(완료)"}, {"key": "B", "text": "する", "text_ko": "한다"}, {"key": "C", "text": "していた", "text_ko": "하고 있었다(과거진행)"}, {"key": "D", "text": "している", "text_ko": "하고 있다(현재진행)"}],
+    "correct_choice": "D",
+    "explanation_ko": "ている는 지금 현재 진행 중인 동작을 나타냅니다. \"지금 전화 중이므로\"라는 현재 진행 상태이므로 している가 맞습니다. した는 완료(과거), する는 미래/단순현재, していた는 과거 진행입니다."
+  },
+  {
+    "question_key": "q_n5_005",
+    "level": "N5",
+    "grammar_point_id": "grammar_n5_027",
+    "stem": "図書館では、大きい声で話さ___。",
+    "stem_furigana": "<ruby>図書館<rt>としょかん</rt></ruby>では、<ruby>大<rt>おお</rt></ruby>きい<ruby>声<rt>こえ</rt></ruby>で<ruby>話<rt>はな</rt></ruby>さ___。",
+    "stem_ko": "도서관에서는, 큰 소리로 말하___.",
+    "choices": [{"key": "A", "text": "ないてください", "text_ko": "~하지 마세요"}, {"key": "B", "text": "ないでください", "text_ko": "~하지 마세요"}, {"key": "C", "text": "なくてください", "text_ko": "~하지 마세요"}, {"key": "D", "text": "ずにください", "text_ko": "~하지 마세요"}],
+    "correct_choice": "B",
+    "explanation_ko": "ないでください는 \"~하지 마세요\"라는 부드러운 금지 요청입니다. 접속형: ない형 어간 + でください. B(ないてください)·C(なくてください)는 문법적으로 틀린 형태입니다. D(ずにください)는 「ずに+ください」결합 자체가 비문입니다 — ずに를 쓰려면 「ずにいてください」처럼 별도 동사가 필요하므로 격식 대안이 아닌 틀린 형태입니다."
+  },
+  {
+    "question_key": "q_n4_001",
+    "level": "N4",
+    "grammar_point_id": "grammar_n4_058",
+    "stem": "空を見ると、急に暗くなってきた。もうすぐ雨が___。",
+    "stem_furigana": "<ruby>空<rt>そら</rt></ruby>を<ruby>見<rt>み</rt></ruby>ると、<ruby>急<rt>きゅう</rt></ruby>に<ruby>暗<rt>くら</rt></ruby>くなってきた。もうすぐ<ruby>雨<rt>あめ</rt></ruby>が___。",
+    "stem_ko": "하늘을 보니, 갑자기 어두워졌다. 이제 곧 비가 ___.",
+    "choices": [{"key": "A", "text": "降りそうだ", "text_ko": "(비가) 올 것 같다"}, {"key": "B", "text": "降るそうだ", "text_ko": "(비가) 온다고 한다"}, {"key": "C", "text": "降ると聞いた", "text_ko": "(비가) 온다고 들었다"}, {"key": "D", "text": "降るはずだ", "text_ko": "(비가) 올 것이 틀림없다"}],
+    "correct_choice": "A",
+    "explanation_ko": "하늘을 직접 보고(空を見ると) 임박한 조짐을 느낀 상황입니다. 降りそうだ(様態 そうだ)는 눈앞의 직접 관찰로 느끼는 임박 조짐에 사용합니다. 降るそうだ(伝聞 そうだ)·降ると聞いた는 모두 외부에서 '들은 정보'가 있어야 하므로 직접 관찰한 이 상황에 부적절합니다. 降るはずだ는 논리적 전제가 있어야 사용 가능합니다. 모두 문법적으로 올바르지만 정보원(직접관찰/전언そうだ/전언と聞いた/논리)이 다릅니다."
+  },
+  {
+    "question_key": "q_n4_002",
+    "level": "N4",
+    "grammar_point_id": "grammar_n4_063",
+    "stem": "鍵をバッグに入れたはずなのに、見つからない。全然思い出せない。どこかに落とした___。",
+    "stem_furigana": "<ruby>鍵<rt>かぎ</rt></ruby>をバッグに<ruby>入<rt>い</rt></ruby>れたはずなのに、<ruby>見<rt>み</rt></ruby>つからない。<ruby>全然<rt>ぜんぜん</rt></ruby><ruby>思<rt>おも</rt></ruby>い<ruby>出<rt>だ</rt></ruby>せない。どこかに<ruby>落<rt>お</rt></ruby>とした___。",
+    "stem_ko": "분명 가방에 열쇠를 넣었는데, 보이지 않는다. 전혀 기억나지 않는다. 어딘가에 떨어뜨렸___.",
+    "choices": [{"key": "A", "text": "はずだ", "text_ko": "~했을 것이다(당연)"}, {"key": "B", "text": "らしい", "text_ko": "~한 듯하다(전언·추정)"}, {"key": "C", "text": "かもしれない", "text_ko": "~했을지도 모른다"}, {"key": "D", "text": "そうだ", "text_ko": "~했다고 한다(전언)"}],
+    "correct_choice": "C",
+    "explanation_ko": "かもしれない는 가능성은 있지만 확신하지 못할 때 사용합니다. 어딘가 떨어뜨렸을 \"수도 있다\"는 불확실한 추측이므로 かもしれない가 맞습니다. はずだ는 논리적 당연성·강한 확신, らしい는 외부 정보·전언에 근거한 추량(혼자 가방을 뒤지며 내적 추측하는 상황에 부적절), そうだ様態는 눈앞 시각 관찰 기반입니다."
+  },
+  {
+    "question_key": "q_n4_003",
+    "level": "N4",
+    "grammar_point_id": "grammar_n4_096",
+    "stem": "健康のために、来月からジムに通う___ました。",
+    "stem_furigana": "<ruby>健康<rt>けんこう</rt></ruby>のために、<ruby>来月<rt>らいげつ</rt></ruby>からジムに<ruby>通<rt>かよ</rt></ruby>う___ました。",
+    "stem_ko": "건강을 위해, 다음 달부터 헬스장에 다니___.",
+    "choices": [{"key": "A", "text": "ようにし", "text_ko": "~하도록 하"}, {"key": "B", "text": "ことになり", "text_ko": "~하게 되"}, {"key": "C", "text": "つもりにし", "text_ko": "~할 작정으로 하"}, {"key": "D", "text": "ことにし", "text_ko": "~하기로 하"}],
+    "correct_choice": "D",
+    "explanation_ko": "ことにする는 화자의 의지적·확정적 결정을 나타냅니다. \"헬스장에 다니기로 했다\"는 본인의 결정 완료입니다. ようにする는 \"~하도록 의도적으로 노력한다\"는 지속적 과정, ことになる는 외부 결정으로 인한 변화, つもりにする는 문법적으로 어색합니다."
+  },
+  {
+    "question_key": "q_n4_004",
+    "level": "N4",
+    "grammar_point_id": "grammar_n4_094",
+    "stem": "子供が鋭いナイフに手を伸ばした瞬間、父が「___」と大声で叫びました。",
+    "stem_furigana": "<ruby>子供<rt>こども</rt></ruby>が<ruby>鋭<rt>するど</rt></ruby>いナイフに<ruby>手<rt>て</rt></ruby>を<ruby>伸<rt>の</rt></ruby>ばした<ruby>瞬間<rt>しゅんかん</rt></ruby>、<ruby>父<rt>ちち</rt></ruby>が「___」と<ruby>大声<rt>おおごえ</rt></ruby>で<ruby>叫<rt>さけ</rt></ruby>びました。",
+    "stem_ko": "아이가 날카로운 칼에 손을 뻗은 순간, 아버지가 '___'라고 큰 소리로 외쳤습니다.",
+    "choices": [{"key": "A", "text": "触るな", "text_ko": "만지지 마"}, {"key": "B", "text": "触らないで", "text_ko": "만지지 마"}, {"key": "C", "text": "触らないでください", "text_ko": "만지지 마세요"}, {"key": "D", "text": "触ってはいけません", "text_ko": "만지면 안 됩니다"}],
+    "correct_choice": "A",
+    "explanation_ko": "아이가 날카로운 칼에 손을 뻗는 위험한 순간, 아버지가 대성으로 외치는 긴급 금지 명령입니다. 触るな(辞書形+な)는 가장 거칠고 즉각적인 금지 명령으로 이 상황에 가장 자연스럽습니다. 触らないで는 레지스터·거칢이 덜한 관계적 표현으로 긴급도는 동일 가능하나 触るな보다 blunt함이 부족합니다. 触らないでください는 정중한 표현(위험 순간 대성에 부적절), 触ってはいけません는 격식·규칙 설명조(즉각 호통에 맞지 않음)입니다. 변별축은 레지스터/거칢(bluntness)이며, 모두 문법적으로 올바른 금지 표현입니다."
+  },
+  {
+    "question_key": "q_n4_005",
+    "level": "N4",
+    "grammar_point_id": "grammar_n4_097",
+    "stem": "会社の決定で、来月から大阪支社に転勤する___ました。",
+    "stem_furigana": "<ruby>会社<rt>かいしゃ</rt></ruby>の<ruby>決定<rt>けってい</rt></ruby>で、<ruby>来月<rt>らいげつ</rt></ruby>から<ruby>大阪<rt>おおさか</rt></ruby><ruby>支社<rt>ししゃ</rt></ruby>に<ruby>転勤<rt>てんきん</rt></ruby>する___ました。",
+    "stem_ko": "회사의 결정으로, 다음 달부터 오사카 지사로 전근하___.",
+    "choices": [{"key": "A", "text": "ことにし", "text_ko": "~하기로 하"}, {"key": "B", "text": "ようになり", "text_ko": "~하게(끔) 되"}, {"key": "C", "text": "ことになり", "text_ko": "~하게 되"}, {"key": "D", "text": "つもりにし", "text_ko": "~할 작정으로 하"}],
+    "correct_choice": "C",
+    "explanation_ko": "ことになる는 외부 결정·상황에 의한 변화를 나타냅니다. \"회사 결정으로 전근하게 됐다\"는 자신의 의지가 아닌 외부 결정에 의한 변화이므로 ことになる가 맞습니다. ことにする(A)는 자신이 결정한 경우, ようになる(B)는 자연스러운 상태 변화입니다."
+  }
+]
