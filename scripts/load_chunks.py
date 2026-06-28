@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from openpyxl import load_workbook
+from sqlalchemy import delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -203,11 +204,21 @@ def build_payloads(
 
 
 async def _upsert(
-    chunks: list[dict[str, Any]], pairs: list[dict[str, Any]]
+    chunks: list[dict[str, Any]],
+    pairs: list[dict[str, Any]],
+    *,
+    replace_level: str | None = None,
 ) -> None:
     engine = create_async_engine(settings.database_url)
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with factory() as session:
+        # 레벨 전체 교체: xlsx에서 빠진 행이 stale로 남지 않도록 선삭제 (멱등 유지).
+        # chunk 삭제 시 같은 행의 embedding도 함께 제거된다.
+        if replace_level is not None:
+            await session.execute(delete(Chunk).where(Chunk.level == replace_level))
+            await session.execute(
+                delete(ComparisonPair).where(ComparisonPair.level == replace_level)
+            )
         for c in chunks:
             stmt = insert(Chunk).values(**c)
             stmt = stmt.on_conflict_do_update(
@@ -229,6 +240,12 @@ async def _upsert(
 def main() -> None:
     parser = argparse.ArgumentParser(description="xlsx → DB 적재 (레벨 일반화)")
     parser.add_argument("--level", required=True, help="N5 / N4 / N3 ...")
+    parser.add_argument(
+        "--replace-level",
+        action="store_true",
+        help="적재 전 해당 레벨의 기존 chunks/comparison_pairs를 삭제 "
+        "(레벨 전체 교체 — xlsx에서 빠진 stale 행 정리).",
+    )
     args = parser.parse_args()
 
     level = args.level.upper()
@@ -240,13 +257,16 @@ def main() -> None:
             raise SystemExit(f"파일 없음: {p}")
 
     chunks, pairs = build_payloads(level, master_path, comparison_path)
-    asyncio.run(_upsert(chunks, pairs))
+    asyncio.run(
+        _upsert(chunks, pairs, replace_level=level if args.replace_level else None)
+    )
 
     points = sum(1 for c in chunks if c["chunk_type"] == "point")
     variants = sum(1 for c in chunks if c["chunk_type"] == "variant")
     compares = sum(1 for c in chunks if c["chunk_type"] == "compare")
+    mode = "replace" if args.replace_level else "upsert"
     print(
-        f"[{level}] 적재 완료 — chunks={len(chunks)} "
+        f"[{level}] 적재 완료 ({mode}) — chunks={len(chunks)} "
         f"(point {points} / variant {variants} / compare {compares}), "
         f"comparison_pairs={len(pairs)}"
     )

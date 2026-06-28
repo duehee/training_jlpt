@@ -51,8 +51,24 @@ class AnonymousSession(TimestampMixin, Base):
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
+    # (B) 쿠키→DB 1홉 해소용 활성 진단 세션 포인터 (순환 FK → use_alter).
+    # diag 삭제 시 포인터 자동 NULL (ondelete=SET NULL) → cleanup/restart 정합.
+    active_diagnostic_session_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "diagnostic_sessions.id",
+            use_alter=True,
+            ondelete="SET NULL",
+            # Postgres 식별자 63자 한도 회피 위해 축약 (idx 명칭과 일관).
+            name="fk_anon_sessions_active_diag_session_id",
+        ),
+        nullable=True,
+    )
 
-    __table_args__ = (Index("idx_anon_sessions_linked_user", "linked_user_id"),)
+    __table_args__ = (
+        Index("idx_anon_sessions_linked_user", "linked_user_id"),
+        Index("idx_anon_sessions_active_diag", "active_diagnostic_session_id"),
+    )
 
 
 class DiagnosticSession(Base):
@@ -96,6 +112,10 @@ class DiagnosticQuestion(TimestampMixin, Base):
     # 연결 base 문법 포인트 (D-8: base point only)
     grammar_point_id: Mapped[str] = mapped_column(String(60), nullable=False)
     stem: Mapped[str] = mapped_column(Text, nullable=False)
+    # 학습자 가독성 보강(정빈님 verify 발견): 후리가나(ruby HTML) + 한국어 번역.
+    stem_furigana: Mapped[str | None] = mapped_column(Text, nullable=True)
+    stem_ko: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # choices 항목은 {"key","text"} + 선택적 "text_ko"(한국어 번역, 데이터 확장).
     choices: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     correct_choice: Mapped[str] = mapped_column(String(255), nullable=False)
     explanation_ko: Mapped[str | None] = mapped_column(Text, nullable=True)

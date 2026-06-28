@@ -21,25 +21,33 @@ from src.services.diagnostic.scoring import GradedAnswer
 
 
 class ClientQuestion(BaseModel):
-    """클라이언트로 나가는 문항 (정답 제외)."""
+    """클라이언트로 나가는 문항 (정답 제외).
+
+    학습자 가독성 보강(정빈님 verify): prompt_furigana(ruby HTML) / prompt_ko(한국어).
+    choices 항목은 {"key","text"} + 선택적 "text_ko" — correct_choice는 절대 미포함.
+    """
 
     question_id: str  # question_key
     grammar_point_id: str
     level: str
     prompt: str
+    prompt_furigana: str | None = None
+    prompt_ko: str | None = None
     choices: list[dict[str, Any]]
 
 
 def to_client_question(question: DiagnosticQuestion) -> ClientQuestion:
     """DiagnosticQuestion → 클라 직렬화. correct_choice 는 의도적으로 제외."""
     choices = question.choices
-    # choices 는 [{"key": "A", "text": "..."}] 형태(api_endpoints §6-2).
+    # choices 는 [{"key": "A", "text": "...", "text_ko"?: "..."}] 형태(api_endpoints §6-2).
     items = choices if isinstance(choices, list) else choices.get("items", [])
     return ClientQuestion(
         question_id=question.question_key,
         grammar_point_id=question.grammar_point_id,
         level=question.level,
         prompt=question.stem,
+        prompt_furigana=question.stem_furigana,
+        prompt_ko=question.stem_ko,
         choices=list(items),
     )
 
