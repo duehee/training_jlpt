@@ -16,7 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.api.main import app
-from src.api.routes.diagnostic import get_llm_cache, get_llm_provider
+from src.domains.quiz.controller import get_llm_cache, get_llm_provider
 from src.core.config import settings
 from src.db.session import engine
 from src.shared.cache.memory import InMemoryLlmCache

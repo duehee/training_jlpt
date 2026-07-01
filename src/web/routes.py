@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.routes.diagnostic import (
+from src.domains.quiz.controller import (
     complete_diagnosis,
     get_questions,
     get_result,
