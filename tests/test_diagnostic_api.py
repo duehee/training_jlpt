@@ -19,8 +19,8 @@ from src.api.main import app
 from src.api.routes.diagnostic import get_llm_cache, get_llm_provider
 from src.core.config import settings
 from src.db.session import engine
-from src.services.cache.memory import InMemoryLlmCache
-from src.services.llm.fake import FakeProvider
+from src.shared.cache.memory import InMemoryLlmCache
+from src.shared.llm.fake import FakeProvider
 
 
 def _diagnostic_questions_count() -> int:

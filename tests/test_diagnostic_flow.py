@@ -4,11 +4,8 @@
 """
 
 from src.db.models import DiagnosticQuestion
-from src.services.diagnostic.flow import (
-    derive_weak_point_ids,
-    to_client_question,
-)
-from src.services.diagnostic.scoring import GradedAnswer
+from src.domains.quiz.service import to_client_question
+from src.domains.quiz.util import GradedAnswer, derive_weak_point_ids
 
 
 def _question() -> DiagnosticQuestion:

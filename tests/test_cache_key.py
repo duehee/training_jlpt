@@ -1,6 +1,6 @@
 """캐시 키 전략 단위 테스트 (DB 불필요)."""
 
-from src.services.cache.base import make_cache_key, make_prompt_hash
+from src.shared.cache.base import make_cache_key, make_prompt_hash
 
 
 def test_prompt_hash_deterministic() -> None:

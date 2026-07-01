@@ -1,6 +1,6 @@
 """진단 채점 순수 로직 단위 테스트 (DB 불필요)."""
 
-from src.services.diagnostic.scoring import (
+from src.domains.quiz.util import (
     GradedAnswer,
     aggregate_score,
     grade_answer,

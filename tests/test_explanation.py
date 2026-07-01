@@ -8,11 +8,11 @@ import asyncio
 
 import pytest
 
-from src.services.cache.memory import InMemoryLlmCache
+from src.shared.cache.memory import InMemoryLlmCache
 from src.services.learning.explanation import generate_explanation_from_chunks
 from src.services.learning.retrieval import RetrievedChunk
-from src.services.llm.fake import FakeProvider
-from src.services.prompts import explanation_v1
+from src.shared.llm.fake import FakeProvider
+from src.shared.prompts import explanation_v1
 
 _CHUNKS = [
     RetrievedChunk(

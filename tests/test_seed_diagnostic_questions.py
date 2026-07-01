@@ -15,7 +15,7 @@ from scripts.seed_diagnostic_questions import (
 )
 
 # 학습 루프 보안 불변식 회귀: 진단 출제 직렬화에 정답이 새지 않아야 한다.
-from src.services.diagnostic.flow import to_client_question
+from src.domains.quiz.service import to_client_question
 from src.db.models import DiagnosticQuestion
 
 

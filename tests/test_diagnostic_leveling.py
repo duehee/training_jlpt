@@ -3,8 +3,8 @@
 판정 규칙은 잠정 — 이 테스트는 *의도된 잠정 규칙*을 고정한다 (확정 시 갱신).
 """
 
-from src.services.diagnostic.scoring import GradedAnswer
-from src.services.diagnostic.leveling import (
+from src.domains.quiz.util import GradedAnswer
+from src.domains.quiz.util import (
     diagnose_level,
     level_accuracies,
 )

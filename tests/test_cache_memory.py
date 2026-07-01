@@ -2,8 +2,8 @@
 
 import asyncio
 
-from src.services.cache.base import LlmCache
-from src.services.cache.memory import InMemoryLlmCache
+from src.shared.cache.base import LlmCache
+from src.shared.cache.memory import InMemoryLlmCache
 
 
 def test_memory_cache_satisfies_protocol() -> None:

@@ -2,8 +2,8 @@
 
 import asyncio
 
-from src.services.llm.base import ChatMessage, LlmProvider
-from src.services.llm.fake import FakeProvider
+from src.shared.llm.base import ChatMessage, LlmProvider
+from src.shared.llm.fake import FakeProvider
 
 
 def test_fake_provider_satisfies_protocol() -> None:
