@@ -22,14 +22,10 @@ from src.api.routes.diagnostic import (
     start_diagnosis,
     submit_answer,
 )
-from src.api.schemas.diagnostic import (
-    DiagnosticResultResponse,
-    StartDiagnosticRequest,
-    SubmitAnswerRequest,
-)
 from src.db.models import AnonymousSession, Chunk, DiagnosticAnswer
 from src.db.session import get_session
-from src.services.diagnostic.flow import ClientQuestion
+from src.domains.quiz.dto.request import StartDiagnosticRequest, SubmitAnswerRequest
+from src.domains.quiz.dto.response import ClientQuestion, DiagnosticResultResponse
 from src.web import presenter
 from src.web.session import (
     COOKIE_MAX_AGE,

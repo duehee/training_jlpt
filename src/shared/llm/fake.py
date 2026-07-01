@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.services.llm.base import ChatMessage, ChatResult
+from src.shared.llm.base import ChatMessage, ChatResult
 
 
 class FakeProvider:

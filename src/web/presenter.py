@@ -1,6 +1,6 @@
 """순수 shaping 헬퍼 — 실 진단 데이터 → design_backend 시안 컨텍스트 형상.
 
-DB/IO 무관 순수 함수 (services/diagnostic/flow 의 순수/DB 분리 패턴 계승).
+DB/IO 무관 순수 함수 (domains/quiz 의 순수/DB 분리 패턴 계승).
 시안 `design_backend/main.py` 의 컨텍스트 생성 로직을 1:1로 옮긴다.
 """
 
@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.api.schemas.diagnostic import WeakGrammarPoint
-from src.services.diagnostic.flow import ClientQuestion
+from src.domains.quiz.dto.response import ClientQuestion, WeakGrammarPoint
 
 # 레벨 색 토큰 (시안 data.py `lv()` 1:1: N5/N4/N3). 그 외 레벨은 N5로 폴백.
 _LEVEL_TOKENS: dict[str, tuple[str, str]] = {

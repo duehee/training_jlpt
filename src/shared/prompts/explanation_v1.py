@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from src.services.llm.base import ChatMessage
+from src.shared.llm.base import ChatMessage
 
 # 캐시 키에 들어가는 템플릿 버전. 이 파일의 프롬프트 변경 시 반드시 증가.
 TEMPLATE_VERSION = "explanation_v1"

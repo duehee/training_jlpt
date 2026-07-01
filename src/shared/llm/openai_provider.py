@@ -10,7 +10,7 @@ from typing import Any
 
 from openai import AsyncOpenAI
 
-from src.services.llm.base import ChatMessage, ChatResult
+from src.shared.llm.base import ChatMessage, ChatResult
 
 
 class OpenAIProvider:

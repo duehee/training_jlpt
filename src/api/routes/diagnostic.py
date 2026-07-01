@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import uuid
-from collections import Counter
 from datetime import datetime, timezone
 from typing import Any, cast
 
@@ -22,19 +21,18 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.schemas.diagnostic import (
-    DIAGNOSTIC_LEVELS,
+from src.domains.quiz.dto.request import StartDiagnosticRequest, SubmitAnswerRequest
+from src.domains.quiz.dto.response import (
     AnswerProgress,
     DiagnosticResultResponse,
     ExplanationPreviewResponse,
     QuestionsResponse,
     RetrievedBlock,
-    StartDiagnosticRequest,
     StartDiagnosticResponse,
-    SubmitAnswerRequest,
     SubmitAnswerResponse,
-    WeakGrammarPoint,
 )
+from src.domains.quiz.service import compute_result, fetch_questions, to_client_question
+from src.domains.quiz.util import DIAGNOSTIC_LEVELS, grade_answer
 from src.db.models import (
     AnonymousSession,
     Chunk,
@@ -43,13 +41,10 @@ from src.db.models import (
     DiagnosticSession,
 )
 from src.db.session import SessionLocal, get_session
-from src.services.cache import DbLlmCache, LlmCache
-from src.services.diagnostic.flow import fetch_questions, to_client_question
-from src.services.diagnostic.leveling import diagnose_level
-from src.services.diagnostic.scoring import GradedAnswer, aggregate_score, grade_answer
+from src.shared.cache import DbLlmCache, LlmCache
 from src.services.learning.explanation import generate_explanation_from_chunks
 from src.services.learning.retrieval import retrieve_for_point
-from src.services.llm import LlmProvider, get_provider
+from src.shared.llm import LlmProvider, get_provider
 
 router = APIRouter(tags=["diagnosis"])
 
@@ -232,58 +227,6 @@ async def submit_answer(
     )
 
 
-# ── 결과 집계 (complete/result 공통) ──
-async def _compute_result(
-    session: AsyncSession, diag: DiagnosticSession
-) -> tuple[str | None, int, list[WeakGrammarPoint], str | None]:
-    rows = list(
-        (
-            await session.execute(
-                select(DiagnosticAnswer).where(
-                    DiagnosticAnswer.diagnostic_session_id == diag.id
-                )
-            )
-        ).scalars()
-    )
-    level_rows = (
-        await session.execute(
-            select(DiagnosticQuestion.question_key, DiagnosticQuestion.level)
-        )
-    ).all()
-    levels: dict[str, str] = {str(k): str(v) for k, v in level_rows}
-    graded = [
-        GradedAnswer(
-            question_key=a.question_id,
-            grammar_point_id=a.grammar_point_id,
-            level=str(levels.get(a.question_id, "")),
-            selected_choice=a.selected_choice,
-            correct_choice=a.correct_choice,
-            is_correct=a.is_correct,
-        )
-        for a in rows
-    ]
-    level = diagnose_level(graded)
-    score, _ = aggregate_score(graded)
-
-    # 약점: 오답 grammar_point_id (중복 제거·입력 순서 보존) + error_count·level.
-    err_count = Counter(g.grammar_point_id for g in graded if not g.is_correct)
-    gp_level = {g.grammar_point_id: g.level for g in graded}
-    seen: set[str] = set()
-    weak: list[WeakGrammarPoint] = []
-    for g in graded:
-        if not g.is_correct and g.grammar_point_id not in seen:
-            seen.add(g.grammar_point_id)
-            weak.append(
-                WeakGrammarPoint(
-                    grammar_point_id=g.grammar_point_id,
-                    error_count=err_count[g.grammar_point_id],
-                    level=gp_level[g.grammar_point_id],
-                )
-            )
-    recommended = weak[0].grammar_point_id if weak else None
-    return level, score, weak, recommended
-
-
 # ── §6-4 완료 ──
 @router.post(
     "/sessions/{diagnosis_session_id}/complete",
@@ -310,7 +253,7 @@ async def complete_diagnosis(
             f"미완료 답안 ({answered}/{diag.max_score})",
         )
 
-    level, score, weak, recommended = await _compute_result(session, diag)
+    level, score, weak, recommended = await compute_result(session, diag)
     now = datetime.now(timezone.utc)
     diag.diagnosed_level = level
     diag.score = score
@@ -343,7 +286,7 @@ async def get_result(
     diag = await _owned_session(session, diagnosis_session_id, anon)
     if diag.status != "completed":
         raise HTTPException(status.HTTP_409_CONFLICT, "아직 완료되지 않은 진단")
-    level, score, weak, recommended = await _compute_result(session, diag)
+    level, score, weak, recommended = await compute_result(session, diag)
     return DiagnosticResultResponse(
         diagnostic_session_id=str(diag.id),
         diagnosed_level=diag.diagnosed_level,
