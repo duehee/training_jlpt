@@ -6,9 +6,9 @@
 from __future__ import annotations
 
 from src.core.config import settings
-from src.services.llm.base import ChatMessage, ChatResult, LlmProvider
-from src.services.llm.fake import FakeProvider
-from src.services.llm.openai_provider import OpenAIProvider
+from src.shared.llm.base import ChatMessage, ChatResult, LlmProvider
+from src.shared.llm.fake import FakeProvider
+from src.shared.llm.openai_provider import OpenAIProvider
 
 __all__ = [
     "ChatMessage",

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from src.services.cache.base import LlmCache, make_cache_key, make_prompt_hash
-from src.services.cache.db_cache import DbLlmCache
-from src.services.cache.memory import InMemoryLlmCache
+from src.shared.cache.base import LlmCache, make_cache_key, make_prompt_hash
+from src.shared.cache.db_cache import DbLlmCache
+from src.shared.cache.memory import InMemoryLlmCache
 
 __all__ = [
     "LlmCache",
