@@ -46,7 +46,7 @@ from src.services.learning.explanation import generate_explanation_from_chunks
 from src.services.learning.retrieval import retrieve_for_point
 from src.shared.llm import LlmProvider, get_provider
 
-router = APIRouter(tags=["diagnosis"])
+router = APIRouter(prefix="/api/v1/diagnosis", tags=["diagnosis"])
 
 
 # ── 인증 / 공통 조회 ──
