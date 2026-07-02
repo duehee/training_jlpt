@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.schemas.diagnostic import AnonymousSessionResponse
+from src.domains.session.dto.response import AnonymousSessionResponse
 from src.db.models import AnonymousSession
 from src.db.session import get_session
 
