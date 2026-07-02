@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import uuid
 from collections import Counter
 from typing import Any
 
@@ -131,3 +132,24 @@ async def compute_result(
             )
     recommended = weak[0].grammar_point_id if weak else None
     return level, score, weak, recommended
+
+
+async def get_selected_choice(
+    session: AsyncSession,
+    *,
+    diagnostic_session_id: uuid.UUID,
+    question_key: str,
+) -> str | None:
+    """세션이 특정 문항에 이전에 제출한 선택지 key. 없으면 None.
+
+    재방문 시 화면의 이전 선택 복원용(web). 답안 조회(ORM)는 도메인에 둔다.
+    """
+    answer = (
+        await session.execute(
+            select(DiagnosticAnswer).where(
+                DiagnosticAnswer.diagnostic_session_id == diagnostic_session_id,
+                DiagnosticAnswer.question_id == question_key,
+            )
+        )
+    ).scalar_one_or_none()
+    return answer.selected_choice if answer is not None else None

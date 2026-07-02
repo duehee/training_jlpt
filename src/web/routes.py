@@ -22,10 +22,11 @@ from src.domains.quiz.controller import (
     start_diagnosis,
     submit_answer,
 )
-from src.db.models import AnonymousSession, Chunk, DiagnosticAnswer
+from src.db.models import AnonymousSession, Chunk
 from src.db.session import get_session
 from src.domains.quiz.dto.request import StartDiagnosticRequest, SubmitAnswerRequest
 from src.domains.quiz.dto.response import ClientQuestion, DiagnosticResultResponse
+from src.domains.quiz.service import get_selected_choice
 from src.web import presenter
 from src.web.session import (
     COOKIE_MAX_AGE,
@@ -68,19 +69,19 @@ async def _ensure_active_diag(
 async def _restore_selection(
     session: AsyncSession, diag_id: str, question: ClientQuestion
 ) -> int:
-    """기존 제출 답안에서 해당 문항의 선택 인덱스 복원(재방문 표시). 없으면 -1."""
-    answer = (
-        await session.execute(
-            select(DiagnosticAnswer).where(
-                DiagnosticAnswer.diagnostic_session_id == uuid.UUID(diag_id),
-                DiagnosticAnswer.question_id == question.question_id,
-            )
-        )
-    ).scalar_one_or_none()
-    if answer is None:
+    """기존 제출 답안에서 해당 문항의 선택 인덱스 복원(재방문 표시). 없으면 -1.
+
+    답안 조회는 quiz service에 위임(ORM 누수 제거) → web은 화면 인덱스 매핑만.
+    """
+    selected = await get_selected_choice(
+        session,
+        diagnostic_session_id=uuid.UUID(diag_id),
+        question_key=question.question_id,
+    )
+    if selected is None:
         return -1
     for idx, choice in enumerate(question.choices):
-        if choice.get("key") == answer.selected_choice:
+        if choice.get("key") == selected:
             return idx
     return -1
 
