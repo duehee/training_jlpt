@@ -28,13 +28,13 @@ from src.domains.quiz.dto.request import StartDiagnosticRequest, SubmitAnswerReq
 from src.domains.quiz.dto.response import ClientQuestion, DiagnosticResultResponse
 from src.domains.quiz.service import get_selected_choice
 from src.web import presenter
-from src.web.session import (
-    COOKIE_MAX_AGE,
-    COOKIE_NAME,
-    clear_active_diag,
-    create_anon,
-    resolve_anon,
+from src.domains.session.service import (
+    clear_active_diagnostic,
+    create_anonymous_session,
+    resolve_anonymous_session,
+    set_active_diagnostic,
 )
+from src.web.session import COOKIE_MAX_AGE, COOKIE_NAME
 from src.web.templates import templates
 
 router = APIRouter(tags=["web"])
@@ -61,8 +61,9 @@ async def _ensure_active_diag(
         session=session,
         anon=anon,
     )
-    anon.active_diagnostic_session_id = uuid.UUID(started.diagnostic_session_id)
-    await session.commit()
+    await set_active_diagnostic(
+        session, anon, uuid.UUID(started.diagnostic_session_id)
+    )
     return started.diagnostic_session_id
 
 
@@ -120,10 +121,10 @@ async def intro(
     request: Request, session: AsyncSession = Depends(get_session)
 ) -> Response:
     """진단 소개(게스트 진입). 익명 세션 없으면 생성 + 쿠키 set."""
-    anon = await resolve_anon(session, request.cookies.get(COOKIE_NAME))
+    anon = await resolve_anonymous_session(session, request.cookies.get(COOKIE_NAME))
     response = templates.TemplateResponse(request, "intro.html", _base_ctx())
     if anon is None:
-        anon = await create_anon(session)
+        anon = await create_anonymous_session(session)
         response.set_cookie(
             COOKIE_NAME,
             anon.session_token,
@@ -142,7 +143,7 @@ async def quiz(
     session: AsyncSession = Depends(get_session),
 ) -> Response:
     """진단 문항 화면. 활성 진단 세션 보장 후 i번째 문항 렌더."""
-    anon = await resolve_anon(session, request.cookies.get(COOKIE_NAME))
+    anon = await resolve_anonymous_session(session, request.cookies.get(COOKIE_NAME))
     if anon is None:
         return RedirectResponse("/", status_code=_REDIRECT)
     diag_id = await _ensure_active_diag(session, anon)
@@ -180,7 +181,7 @@ async def quiz_next(
     session: AsyncSession = Depends(get_session),
 ) -> Response:
     """선택 답안 저장 후 다음 문항 또는 채점으로 리다이렉트."""
-    anon = await resolve_anon(session, request.cookies.get(COOKIE_NAME))
+    anon = await resolve_anonymous_session(session, request.cookies.get(COOKIE_NAME))
     if anon is None:
         return RedirectResponse("/", status_code=_REDIRECT)
     if anon.active_diagnostic_session_id is None:
@@ -222,7 +223,7 @@ async def result(
     request: Request, session: AsyncSession = Depends(get_session)
 ) -> Response:
     """진단 결과. 최초 진입은 complete, 재조회는 409→get_result 폴백."""
-    anon = await resolve_anon(session, request.cookies.get(COOKIE_NAME))
+    anon = await resolve_anonymous_session(session, request.cookies.get(COOKIE_NAME))
     if anon is None or anon.active_diagnostic_session_id is None:
         return RedirectResponse("/", status_code=_REDIRECT)
     diag_id = str(anon.active_diagnostic_session_id)
@@ -266,9 +267,9 @@ async def restart(
     request: Request, session: AsyncSession = Depends(get_session)
 ) -> Response:
     """진단 답안 초기화(활성 포인터 NULL) 후 intro로."""
-    anon = await resolve_anon(session, request.cookies.get(COOKIE_NAME))
+    anon = await resolve_anonymous_session(session, request.cookies.get(COOKIE_NAME))
     if anon is not None:
-        await clear_active_diag(session, anon)
+        await clear_active_diagnostic(session, anon)
     return RedirectResponse("/", status_code=_REDIRECT)
 
 
