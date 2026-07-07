@@ -1,35 +1,24 @@
-"""설명 생성 노드 (캐시 경유 LLM 호출).
+"""학습(learning) 서비스 — 설명 생성 (캐시 경유 LLM 호출, async).
 
-구조 (plan §2-6, 테스트 용이성):
+구조 (테스트 용이성):
 - `generate_explanation_from_chunks`: DB 무관 순수 노드 — chunks를 받아 캐시→LLM.
   단위 테스트가 FakeProvider + InMemoryLlmCache로 miss→hit 결정성을 검증한다.
-- `generate_explanation`: 위 노드 + DB retrieval 래퍼 (런타임 진입점).
+- `generate_explanation`: 위 노드 + content retrieval 래퍼 (런타임 진입점).
 
 정책: 기본 모델 gpt-4o-mini, temperature=0(결정성), 캐시 필수 경유.
 """
 
 from __future__ import annotations
 
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 from src.domains.content.dto.response import RetrievedChunk
-from src.shared.cache.base import LlmCache, make_cache_key, make_prompt_hash
 from src.domains.content.service import retrieve_for_point
+from src.domains.learning.dto.response import ExplanationResult
+from src.shared.cache.base import LlmCache, make_cache_key, make_prompt_hash
 from src.shared.llm.base import LlmProvider
 from src.shared.prompts import explanation_v1
-
-
-class ExplanationResult(BaseModel):
-    """설명 생성 결과."""
-
-    text: str  # JSON 문자열 ({explanation, examples[]})
-    cached: bool
-    model: str
-    cache_key: str
-    angle: int
-    chunk_keys: list[str]
 
 
 async def generate_explanation_from_chunks(
@@ -117,7 +106,7 @@ async def generate_explanation(
     explanation_version: int = 1,
     model: str | None = None,
 ) -> ExplanationResult:
-    """런타임 진입점: DB retrieval → 설명 생성 (캐시 경유)."""
+    """런타임 진입점: content retrieval → 설명 생성 (캐시 경유)."""
     chunks = await retrieve_for_point(
         session, grammar_point_id=grammar_point_id, level=level
     )

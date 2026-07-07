@@ -42,7 +42,7 @@ from src.db.models import (
 from src.db.session import SessionLocal, get_session
 from src.domains.content.service import get_point_level, retrieve_for_point
 from src.shared.cache import DbLlmCache, LlmCache
-from src.services.learning.explanation import generate_explanation_from_chunks
+from src.domains.learning.service import generate_explanation_from_chunks
 from src.shared.llm import LlmProvider, get_provider
 
 router = APIRouter(prefix="/api/v1/diagnosis", tags=["diagnosis"])
