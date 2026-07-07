@@ -1,6 +1,6 @@
-"""회원 학습 도메인 모델 (database_schema.md §5, §9~12 계승).
+"""회원 학습 도메인 모델 (database_schema.md §9~12 계승).
 
-users / learning_sessions / learning_records / weak_points / last_session.
+learning_sessions / learning_records / weak_points / last_session (users는 user.py).
 규약(D-8): grammar_point_id는 base 문법 포인트만 참조 (variant/compare ID 금지).
 """
 
@@ -23,30 +23,6 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.models.base import Base, TimestampMixin
-
-
-class User(TimestampMixin, Base):
-    """로그인 사용자 기준 정보."""
-
-    __tablename__ = "users"
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
-    )
-    nickname: Mapped[str] = mapped_column(String(50), nullable=False)
-    email: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
-    current_level: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    target_level: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    # 익명 진단 후 가입 추적 (순환 FK → use_alter)
-    initial_diagnostic_session_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey(
-            "diagnostic_sessions.id",
-            use_alter=True,
-            name="fk_users_initial_diagnostic_session_id_diagnostic_sessions",
-        ),
-        nullable=True,
-    )
 
 
 class LearningSession(Base):

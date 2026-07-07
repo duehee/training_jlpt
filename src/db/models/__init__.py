@@ -17,9 +17,9 @@ from src.db.models.learning import (
     LastSession,
     LearningRecord,
     LearningSession,
-    User,
     WeakPoint,
 )
+from src.db.models.user import User
 
 __all__ = [
     "Base",
