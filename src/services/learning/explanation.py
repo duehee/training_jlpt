@@ -14,8 +14,9 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
+from src.domains.content.dto.response import RetrievedChunk
 from src.shared.cache.base import LlmCache, make_cache_key, make_prompt_hash
-from src.services.learning.retrieval import RetrievedChunk, retrieve_for_point
+from src.domains.content.service import retrieve_for_point
 from src.shared.llm.base import LlmProvider
 from src.shared.prompts import explanation_v1
 

@@ -1,4 +1,7 @@
-"""학습 루프 노드 패키지 (retrieval + 생성)."""
+"""학습 루프 노드 패키지 (설명 생성).
+
+청크 검색(retrieval)은 content 도메인으로 이관됨 (세션 8 Step 5b).
+"""
 
 from __future__ import annotations
 
@@ -7,11 +10,8 @@ from src.services.learning.explanation import (
     generate_explanation,
     generate_explanation_from_chunks,
 )
-from src.services.learning.retrieval import RetrievedChunk, retrieve_for_point
 
 __all__ = [
-    "RetrievedChunk",
-    "retrieve_for_point",
     "ExplanationResult",
     "generate_explanation",
     "generate_explanation_from_chunks",

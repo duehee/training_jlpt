@@ -12,7 +12,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domains.quiz.controller import (
@@ -22,8 +21,9 @@ from src.domains.quiz.controller import (
     start_diagnosis,
     submit_answer,
 )
-from src.db.models import AnonymousSession, Chunk
+from src.db.models import AnonymousSession
 from src.db.session import get_session
+from src.domains.content.service import enrich_points
 from src.domains.quiz.dto.request import StartDiagnosticRequest, SubmitAnswerRequest
 from src.domains.quiz.dto.response import ClientQuestion, DiagnosticResultResponse
 from src.domains.quiz.service import get_selected_choice
@@ -85,34 +85,6 @@ async def _restore_selection(
         if choice.get("key") == selected:
             return idx
     return -1
-
-
-async def _enrich_points(
-    session: AsyncSession, grammar_point_ids: list[str]
-) -> dict[str, dict[str, str | None]]:
-    """약점 grammar_point_id → 표시명(jp/sub) enrich. chunks(point) body 조회.
-
-    chunk 미적재(N4 등) 포인트는 결과 dict에서 누락 → presenter 폴백.
-    """
-    if not grammar_point_ids:
-        return {}
-    rows = (
-        await session.execute(
-            select(Chunk.grammar_point_id, Chunk.body).where(
-                Chunk.grammar_point_id.in_(grammar_point_ids),
-                Chunk.chunk_type == "point",
-            )
-        )
-    ).all()
-    enriched: dict[str, dict[str, str | None]] = {}
-    for grammar_point_id, body in rows:
-        if grammar_point_id is None or not isinstance(body, dict):
-            continue
-        enriched[str(grammar_point_id)] = {
-            "jp": body.get("japanese_name"),
-            "sub": body.get("korean_meaning"),
-        }
-    return enriched
 
 
 # ── 화면 ──
@@ -241,7 +213,7 @@ async def result(
         else:
             raise
 
-    enrich = await _enrich_points(
+    enrich = await enrich_points(
         session, [w.grammar_point_id for w in res.weak_grammar_points]
     )
     perfect = res.score == res.max_score

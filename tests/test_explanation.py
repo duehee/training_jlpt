@@ -10,7 +10,7 @@ import pytest
 
 from src.shared.cache.memory import InMemoryLlmCache
 from src.services.learning.explanation import generate_explanation_from_chunks
-from src.services.learning.retrieval import RetrievedChunk
+from src.domains.content.dto.response import RetrievedChunk
 from src.shared.llm.fake import FakeProvider
 from src.shared.prompts import explanation_v1
 

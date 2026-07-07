@@ -35,15 +35,14 @@ from src.domains.quiz.service import compute_result, fetch_questions, to_client_
 from src.domains.quiz.util import DIAGNOSTIC_LEVELS, grade_answer
 from src.db.models import (
     AnonymousSession,
-    Chunk,
     DiagnosticAnswer,
     DiagnosticQuestion,
     DiagnosticSession,
 )
 from src.db.session import SessionLocal, get_session
+from src.domains.content.service import get_point_level, retrieve_for_point
 from src.shared.cache import DbLlmCache, LlmCache
 from src.services.learning.explanation import generate_explanation_from_chunks
-from src.services.learning.retrieval import retrieve_for_point
 from src.shared.llm import LlmProvider, get_provider
 
 router = APIRouter(prefix="/api/v1/diagnosis", tags=["diagnosis"])
@@ -328,14 +327,7 @@ async def explanation_preview(
     """
     await _owned_session(session, diagnosis_session_id, anon)
 
-    level = (
-        await session.execute(
-            select(Chunk.level).where(
-                Chunk.grammar_point_id == grammar_point_id,
-                Chunk.chunk_type == "point",
-            )
-        )
-    ).scalar_one_or_none()
+    level = await get_point_level(session, grammar_point_id)
     if level is None:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, "해당 문법 포인트 설명 미준비 (chunk 미적재)"
