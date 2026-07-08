@@ -19,7 +19,7 @@ from src.db.models.learning import (
     LearningSession,
     WeakPoint,
 )
-from src.db.models.user import User
+from src.db.models.user import EmailVerificationToken, OAuthAccount, User
 
 __all__ = [
     "Base",
@@ -30,6 +30,8 @@ __all__ = [
     "DiagnosticQuestion",
     "DiagnosticAnswer",
     "User",
+    "OAuthAccount",
+    "EmailVerificationToken",
     "LearningSession",
     "LearningRecord",
     "WeakPoint",

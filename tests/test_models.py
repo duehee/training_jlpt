@@ -3,7 +3,15 @@
 재설계 target 스키마(04_target_db_design.md)의 핵심 불변식을 고정한다.
 """
 
-from src.db.models import Base, Chunk, ComparisonPair, WeakPoint
+from src.db.models import (
+    Base,
+    Chunk,
+    ComparisonPair,
+    EmailVerificationToken,
+    OAuthAccount,
+    User,
+    WeakPoint,
+)
 
 EXPECTED_TABLES = {
     "chunks",
@@ -13,6 +21,9 @@ EXPECTED_TABLES = {
     "diagnostic_sessions",
     "diagnostic_answers",
     "users",
+    # 세션 9 인증 트랙 신설
+    "oauth_accounts",
+    "email_verification_tokens",
     "learning_sessions",
     "learning_records",
     "weak_points",
@@ -21,9 +32,32 @@ EXPECTED_TABLES = {
 }
 
 
-def test_twelve_tables_registered() -> None:
+def test_fourteen_tables_registered() -> None:
     assert set(Base.metadata.tables) == EXPECTED_TABLES
-    assert len(Base.metadata.tables) == 12
+    assert len(Base.metadata.tables) == 14
+
+
+def test_user_auth_columns_present() -> None:
+    """세션 9 인증 확장 — 비밀번호 해시 / 이메일 확인 / email NOT NULL(Q7)."""
+    cols = User.__table__.columns
+    assert {"password_hash", "email_verified"} <= set(cols.keys())
+    assert cols["email"].nullable is False
+    assert cols["password_hash"].nullable is True
+
+
+def test_oauth_account_unique_and_cascade() -> None:
+    """OAuth 계정 — provider 유니크 + user 삭제 CASCADE(Q5)."""
+    idx_names = {ix.name for ix in OAuthAccount.__table__.indexes}
+    assert "uq_oauth_accounts_provider_account" in idx_names
+    fk = next(iter(OAuthAccount.__table__.foreign_keys))
+    assert fk.ondelete == "CASCADE"
+
+
+def test_email_verification_token_hash_only() -> None:
+    """확인 토큰 — raw 미저장(token_hash 컬럼) + 재사용 방지 consumed_at."""
+    cols = set(EmailVerificationToken.__table__.columns.keys())
+    assert {"token_hash", "expires_at", "consumed_at"} <= cols
+    assert "token" not in cols
 
 
 def test_chunks_core_columns() -> None:

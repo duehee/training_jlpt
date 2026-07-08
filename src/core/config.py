@@ -33,6 +33,14 @@ class Settings(BaseSettings):
     openai_chat_model_quality: str = "gpt-4o"       # 품질 중요 경로만
     embedding_model: str = "text-embedding-3-small"
 
+    # ── JWT (세션 9 Q1=B) ──
+    # 프로덕션은 반드시 .env의 JWT_SECRET_KEY로 override (dev 기본값은 서명 위조 방지 불가).
+    jwt_secret_key: str = Field(
+        default="dev-insecure-change-me", validation_alias="JWT_SECRET_KEY"
+    )
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60 * 24  # 24h (데모 기본)
+
     app_name: str = "jlpt-agent"
     app_version: str = "0.1.0"
 
