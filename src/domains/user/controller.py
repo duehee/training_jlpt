@@ -44,7 +44,6 @@ async def signup(
         ) from exc
     except EmailAlreadyExistsError as exc:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="이미 가입된 이메일입니다.",
+            status_code=status.HTTP_409_CONFLICT, detail="이미 가입된 이메일입니다.",
         ) from exc
     return SignupResponse.model_validate(user)

@@ -52,7 +52,6 @@ async def register_user(
         await session.commit()
     except IntegrityError as exc:
         # 동시 가입 경합 — 사전 확인을 통과한 두 요청이 같은 이메일로 커밋 시도.
-        # DB unique(uq_users_email)가 최종 방어선 → 진실은 DB.
         await session.rollback()
         raise EmailAlreadyExistsError(email) from exc
     await session.refresh(user)
