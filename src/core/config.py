@@ -41,6 +41,16 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60 * 24  # 24h (데모 기본)
 
+    # ── SMTP (세션 9 §b, Q3 재현 위임) ──
+    # smtp_host 미설정(dev 기본) → 콘솔 백엔드로 확인 링크 로그 출력.
+    # .env에 SMTP_HOST 등을 채우면 실 발송(aiosmtplib) 백엔드로 자동 전환.
+    smtp_host: str | None = Field(default=None, validation_alias="SMTP_HOST")
+    smtp_port: int = 587
+    smtp_username: str | None = Field(default=None, validation_alias="SMTP_USERNAME")
+    smtp_password: str | None = Field(default=None, validation_alias="SMTP_PASSWORD")
+    smtp_use_tls: bool = True
+    email_from: str = "no-reply@jlpt-agent.local"
+
     app_name: str = "jlpt-agent"
     app_version: str = "0.1.0"
 
