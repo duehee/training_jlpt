@@ -5,6 +5,13 @@
 
 from __future__ import annotations
 
+from src.shared.auth.email import (
+    ConsoleEmailSender,
+    EmailSender,
+    SmtpEmailSender,
+    build_message,
+    get_email_sender,
+)
 from src.shared.auth.jwt import (
     create_access_token,
     decode_access_token,
@@ -25,4 +32,9 @@ __all__ = [
     "create_access_token",
     "decode_access_token",
     "get_subject",
+    "EmailSender",
+    "ConsoleEmailSender",
+    "SmtpEmailSender",
+    "build_message",
+    "get_email_sender",
 ]
