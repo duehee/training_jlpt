@@ -31,3 +31,16 @@ class SignupRequest(BaseModel):
         if not _EMAIL_RE.match(normalized):
             raise ValueError("이메일 형식이 올바르지 않습니다.")
         return normalized
+
+
+class LoginRequest(BaseModel):
+    """로그인 요청. 형식 검증(422)은 하지 않는다 — 잘못된 입력도 일괄 401로 처리해
+    계정 존재 여부를 노출하지 않기 위함. 저장값 매칭 위해 정규화만 한다."""
+
+    email: str
+    password: str
+
+    @field_validator("email")
+    @classmethod
+    def _normalize_email(cls, value: str) -> str:
+        return value.strip().lower()

@@ -19,3 +19,10 @@ class SignupResponse(BaseModel):
     email: str
     nickname: str
     email_verified: bool
+
+
+class LoginResponse(BaseModel):
+    """로그인 결과. JWT access token 발급(Bearer 스킴)."""
+
+    access_token: str
+    token_type: str = "bearer"

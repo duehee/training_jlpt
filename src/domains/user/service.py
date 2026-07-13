@@ -7,12 +7,20 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import User
-from src.shared.auth.password import hash_password, validate_password_policy
+from src.core.config import settings
+from src.db.models import EmailVerificationToken, User
+from src.shared.auth.password import (
+    hash_password,
+    validate_password_policy,
+    verify_password,
+)
+from src.shared.auth.tokens import generate_token, hash_token
 
 
 class PasswordPolicyError(Exception):
@@ -21,6 +29,14 @@ class PasswordPolicyError(Exception):
 
 class EmailAlreadyExistsError(Exception):
     """이미 가입된 이메일. controller가 409로 매핑."""
+
+
+class InvalidCredentialsError(Exception):
+    """이메일 미존재 또는 비밀번호 불일치. controller가 401로 매핑.
+
+    두 경우를 구분하지 않는다 — "이메일이 없음"과 "비번 틀림"을 다르게 응답하면
+    공격자가 가입된 이메일 목록을 캐낼 수 있다(user enumeration). 항상 같은 401.
+    """
 
 
 async def register_user(
@@ -56,3 +72,42 @@ async def register_user(
         raise EmailAlreadyExistsError(email) from exc
     await session.refresh(user)
     return user
+
+
+async def authenticate_user(
+    session: AsyncSession, *, email: str, password: str
+) -> User:
+    """이메일+비밀번호 검증 후 User 반환. 실패 시 InvalidCredentialsError.
+
+    email은 DTO에서 정규화(소문자)된 값이 온다고 가정한다.
+    password_hash가 None인 계정(OAuth 전용 가입자)은 비밀번호 로그인 불가.
+    """
+    user = (
+        await session.execute(select(User).where(User.email == email))
+    ).scalar_one_or_none()
+    # 미존재·OAuth전용·비번불일치를 모두 같은 예외로 → 계정 존재 여부 비노출.
+    if user is None or user.password_hash is None:
+        raise InvalidCredentialsError()
+    if not verify_password(password, user.password_hash):
+        raise InvalidCredentialsError()
+    return user
+
+
+async def issue_email_verification_token(
+    session: AsyncSession, user: User
+) -> str:
+    """확인 토큰 발급 후 raw 토큰 반환(메일 링크용). DB엔 해시만 저장.
+
+    TTL은 settings.email_verification_ttl_hours(Q6=24h). 반환된 raw는 저장되지 않으니
+    호출측이 즉시 메일에 실어 보내야 한다.
+    """
+    raw_token = generate_token()
+    token = EmailVerificationToken(
+        user_id=user.id,
+        token_hash=hash_token(raw_token),
+        expires_at=datetime.now(timezone.utc)
+        + timedelta(hours=settings.email_verification_ttl_hours),
+    )
+    session.add(token)
+    await session.commit()
+    return raw_token

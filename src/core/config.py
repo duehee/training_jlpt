@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     email_from: str = "no-reply@jlpt-agent.local"
 
+    # 확인 메일 링크의 베이스 URL(배포 시 .env의 APP_BASE_URL로 override).
+    app_base_url: str = Field(
+        default="http://localhost:8000", validation_alias="APP_BASE_URL"
+    )
+    # 이메일 확인 토큰 유효기간(세션 9 Q6 = 24h).
+    email_verification_ttl_hours: int = 24
+
     app_name: str = "jlpt-agent"
     app_version: str = "0.1.0"
 
