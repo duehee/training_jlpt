@@ -13,15 +13,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 from src.db.session import get_session
-from src.domains.user.dto.request import LoginRequest, SignupRequest
-from src.domains.user.dto.response import LoginResponse, SignupResponse
+from src.domains.user.dto.request import (
+    LoginRequest,
+    ResendVerificationRequest,
+    SignupRequest,
+)
+from src.domains.user.dto.response import (
+    LoginResponse,
+    ResendVerificationResponse,
+    SignupResponse,
+    VerifyEmailResponse,
+)
 from src.domains.user.service import (
     EmailAlreadyExistsError,
+    EmailNotVerifiedError,
     InvalidCredentialsError,
+    InvalidVerificationTokenError,
     PasswordPolicyError,
+    VerificationTokenExpiredError,
     authenticate_user,
     issue_email_verification_token,
     register_user,
+    reissue_email_verification_token,
+    verify_email_token,
 )
 from src.shared.auth.email import EmailSender, get_email_sender
 from src.shared.auth.jwt import create_access_token
@@ -105,5 +119,47 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="이메일 또는 비밀번호가 올바르지 않습니다.",
         ) from exc
+    except EmailNotVerifiedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="이메일 확인이 필요합니다. 메일함의 확인 링크를 눌러 주세요.",
+        ) from exc
     token = create_access_token(subject=str(user.id))
     return LoginResponse(access_token=token)
+
+
+@router.get("/verify", response_model=VerifyEmailResponse)
+async def verify_email(
+    token: str,
+    session: AsyncSession = Depends(get_session),
+) -> VerifyEmailResponse:
+    """확인 링크(GET, 쿼리 token) 처리. 성공 시 이메일 확인 완료."""
+    try:
+        user = await verify_email_token(session, token)
+    except VerificationTokenExpiredError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="확인 링크가 만료되었습니다. 확인 메일을 재발송해 주세요.",
+        ) from exc
+    except InvalidVerificationTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="유효하지 않은 확인 링크입니다.",
+        ) from exc
+    return VerifyEmailResponse(email=user.email)
+
+
+@router.post("/verify/resend", response_model=ResendVerificationResponse)
+async def resend_verification(
+    body: ResendVerificationRequest,
+    session: AsyncSession = Depends(get_session),
+    sender: EmailSender = Depends(get_email_sender),
+) -> ResendVerificationResponse:
+    """확인 메일 재발송. 계정 존재/확인 여부와 무관하게 항상 동일 응답(비노출)."""
+    result = await reissue_email_verification_token(session, body.email)
+    if result is not None:  # 미확인 사용자일 때만 실제 발송.
+        user, raw_token = result
+        await _send_verification_email(
+            sender, email=user.email, nickname=user.nickname, raw_token=raw_token
+        )
+    return ResendVerificationResponse()

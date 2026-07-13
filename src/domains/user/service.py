@@ -39,6 +39,21 @@ class InvalidCredentialsError(Exception):
     """
 
 
+class EmailNotVerifiedError(Exception):
+    """이메일 미확인 계정 로그인 시도(정빈님 결정 B). controller가 403으로 매핑.
+
+    자격증명 검증을 통과한 뒤에만 발생 → 계정 존재/비번 노출 아님(정당한 안내).
+    """
+
+
+class InvalidVerificationTokenError(Exception):
+    """확인 토큰이 없음/이미 사용됨. controller가 400으로 매핑."""
+
+
+class VerificationTokenExpiredError(Exception):
+    """확인 토큰 만료(TTL 경과). controller가 410으로 매핑 → 재발송 유도."""
+
+
 async def register_user(
     session: AsyncSession, *, email: str, password: str, nickname: str
 ) -> User:
@@ -90,6 +105,10 @@ async def authenticate_user(
         raise InvalidCredentialsError()
     if not verify_password(password, user.password_hash):
         raise InvalidCredentialsError()
+    # 비번 통과 후 게이팅 — 미확인 계정 차단(정빈님 결정 B).
+    # 순서 중요: 비번 검증을 먼저 해야 '틀린 비번'이 계정 상태를 노출하지 않는다.
+    if not user.email_verified:
+        raise EmailNotVerifiedError()
     return user
 
 
@@ -111,3 +130,73 @@ async def issue_email_verification_token(
     session.add(token)
     await session.commit()
     return raw_token
+
+
+async def verify_email_token(session: AsyncSession, raw_token: str) -> User:
+    """확인 링크의 raw 토큰을 검증하고 해당 사용자를 email_verified=True로 전환.
+
+    토큰 재사용(consumed) 방지 + 만료 확인. 성공 시 토큰을 소비 처리한다.
+    조회는 raw가 아니라 해시로 한다(DB엔 해시만 저장돼 있으므로).
+    """
+    token_hash = hash_token(raw_token)
+    token = (
+        await session.execute(
+            select(EmailVerificationToken).where(
+                EmailVerificationToken.token_hash == token_hash
+            )
+        )
+    ).scalar_one_or_none()
+    if token is None or token.consumed_at is not None:
+        raise InvalidVerificationTokenError()
+    if token.expires_at <= datetime.now(timezone.utc):
+        raise VerificationTokenExpiredError()
+
+    user = (
+        await session.execute(select(User).where(User.id == token.user_id))
+    ).scalar_one_or_none()
+    if user is None:  # CASCADE로 보통 함께 지워지나 방어적으로 확인.
+        raise InvalidVerificationTokenError()
+
+    user.email_verified = True
+    token.consumed_at = datetime.now(timezone.utc)
+    await session.commit()
+    return user
+
+
+async def reissue_email_verification_token(
+    session: AsyncSession, email: str
+) -> tuple[User, str] | None:
+    """미확인 사용자에게 새 확인 토큰 발급 후 (user, raw) 반환.
+
+    사용자 미존재 또는 이미 확인됨 → None(호출측은 발송 생략, 응답은 항상 동일).
+    재발송 시 기존 미소비 토큰을 무효화(consumed 처리)해 옛 링크를 폐기한다.
+    """
+    user = (
+        await session.execute(select(User).where(User.email == email))
+    ).scalar_one_or_none()
+    if user is None or user.email_verified:
+        return None
+
+    now = datetime.now(timezone.utc)
+    existing = (
+        await session.execute(
+            select(EmailVerificationToken).where(
+                EmailVerificationToken.user_id == user.id,
+                EmailVerificationToken.consumed_at.is_(None),
+            )
+        )
+    ).scalars().all()
+    for old in existing:
+        old.consumed_at = now  # 옛 링크 무효화 — 최신 링크만 유효
+
+    raw_token = generate_token()
+    session.add(
+        EmailVerificationToken(
+            user_id=user.id,
+            token_hash=hash_token(raw_token),
+            expires_at=now
+            + timedelta(hours=settings.email_verification_ttl_hours),
+        )
+    )
+    await session.commit()
+    return user, raw_token

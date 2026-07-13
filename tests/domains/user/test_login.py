@@ -75,6 +75,15 @@ async def _signup(client: AsyncClient) -> None:
     assert resp.status_code == 201
 
 
+async def _mark_verified(engine: AsyncEngine, email: str) -> None:
+    """로그인 게이팅(미인증 차단) 우회 — 확인 완료 상태로 만든다."""
+    async with engine.begin() as conn:
+        await conn.execute(
+            text("UPDATE users SET email_verified = true WHERE email = :e"),
+            {"e": email},
+        )
+
+
 def test_login_success_returns_valid_jwt() -> None:
     async def flow() -> None:
         engine = create_async_engine(settings.database_url, poolclass=NullPool)
@@ -83,6 +92,7 @@ def test_login_success_returns_valid_jwt() -> None:
         try:
             async with AsyncClient(transport=transport, base_url="http://t") as client:
                 await _signup(client)
+                await _mark_verified(engine, _EMAIL)
                 resp = await client.post(
                     "/api/v1/auth/login",
                     json={"email": _EMAIL, "password": _PASSWORD},
@@ -120,6 +130,30 @@ def test_login_wrong_password_401() -> None:
                     json={"email": _EMAIL, "password": "wrong9999"},
                 )
             assert resp.status_code == 401
+        finally:
+            app.dependency_overrides.pop(get_session, None)
+            await _delete_email(engine, _EMAIL)
+            await engine.dispose()
+
+    asyncio.run(flow())
+
+
+def test_login_unverified_blocked_403() -> None:
+    """이메일 미확인 계정은 비번이 맞아도 로그인 차단(403, 정빈님 결정 B)."""
+
+    async def flow() -> None:
+        engine = create_async_engine(settings.database_url, poolclass=NullPool)
+        _override_get_session(engine)
+        transport = ASGITransport(app=app)
+        try:
+            async with AsyncClient(transport=transport, base_url="http://t") as client:
+                await _signup(client)  # email_verified=False 상태
+                resp = await client.post(
+                    "/api/v1/auth/login",
+                    json={"email": _EMAIL, "password": _PASSWORD},
+                )
+            assert resp.status_code == 403
+            assert "이메일 확인" in resp.json()["detail"]
         finally:
             app.dependency_overrides.pop(get_session, None)
             await _delete_email(engine, _EMAIL)

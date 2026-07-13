@@ -26,3 +26,16 @@ class LoginResponse(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
+
+
+class VerifyEmailResponse(BaseModel):
+    """이메일 확인 결과."""
+
+    status: str = "verified"
+    email: str
+
+
+class ResendVerificationResponse(BaseModel):
+    """확인 메일 재발송 결과. 계정 존재 여부와 무관하게 항상 동일 메시지."""
+
+    message: str = "해당 계정이 확인 대기 중이라면 확인 메일을 재발송했습니다."

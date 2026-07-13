@@ -23,6 +23,7 @@ from src.shared.auth.password import (
     validate_password_policy,
     verify_password,
 )
+from src.shared.auth.tokens import generate_token, hash_token
 
 __all__ = [
     "PASSWORD_MIN_LENGTH",
@@ -32,6 +33,8 @@ __all__ = [
     "create_access_token",
     "decode_access_token",
     "get_subject",
+    "generate_token",
+    "hash_token",
     "EmailSender",
     "ConsoleEmailSender",
     "SmtpEmailSender",

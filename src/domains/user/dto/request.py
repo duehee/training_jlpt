@@ -44,3 +44,14 @@ class LoginRequest(BaseModel):
     @classmethod
     def _normalize_email(cls, value: str) -> str:
         return value.strip().lower()
+
+
+class ResendVerificationRequest(BaseModel):
+    """확인 메일 재발송 요청. 응답은 항상 동일(계정 존재 비노출)이라 정규화만 한다."""
+
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def _normalize_email(cls, value: str) -> str:
+        return value.strip().lower()
