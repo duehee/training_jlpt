@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+  <!-- result card -->
+  <div style="background:#1f2329;border-radius:20px;padding:30px;margin-bottom:24px;color:#fff">
+    <div style="font-size:13px;font-weight:600;color:#9aa3b2;margin-bottom:14px">진단 결과</div>
+    <div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:12px;color:#9aa3b2;margin-bottom:6px">진단 레벨 <span style="color:#d98324">(잠정)</span></div>
+        <div style="font-size:44px;font-weight:800;line-height:1;letter-spacing:-.02em">{{ result_level }}</div>
+      </div>
+      <div style="width:1px;height:48px;background:#363b44"></div>
+      <div>
+        <div style="font-size:12px;color:#9aa3b2;margin-bottom:6px">점수</div>
+        <div style="font-size:44px;font-weight:800;line-height:1"><span>{{ score_val }}</span><span style="font-size:22px;color:#9aa3b2"> / {{ score_total }}</span></div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:#9aa3b2;line-height:1.6;margin-top:18px;padding-top:18px;border-top:1px solid #363b44">{{ result_copy }}</div>
+  </div>
+
+  <!-- weak points -->
+  {% if has_weak %}
+  <div style="font-size:16px;font-weight:700;margin-bottom:6px">약점 문법</div>
+  <div style="font-size:13px;color:#757b86;margin-bottom:16px">설명을 보면 검색된 근거와 함께 풀이를 보여드려요</div>
+  {% if weak_list %}
+  {% for w in weak_list %}
+  <a href="/explain/{{ w.id }}?back=result" style="display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #e2e5ea;border-radius:15px;padding:18px 20px;margin-bottom:12px">
+    {# §5 null-safe: jp(표시 글리프) 미enrich 시 대시 폴백 #}
+    <div style="width:52px;height:52px;border-radius:13px;background:{{ w.levelBg }};display:flex;align-items:center;justify-content:center;font-family:'Noto Sans JP',sans-serif;font-size:24px;font-weight:700;color:{{ w.levelColor }};flex:none">{% if w.jp %}{{ w.jp }}{% else %}—{% endif %}</div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+        {# §5 null-safe: sub(표시명) 미enrich 시 grammar_point_id 표시 #}
+        <span style="font-size:16px;font-weight:700">{% if w.sub %}{{ w.sub }}{% else %}{{ w.id }}{% endif %}</span>
+        <span style="font-size:11px;font-weight:700;color:{{ w.levelColor }};background:{{ w.levelBg }};padding:2px 8px;border-radius:10px">{{ w.level }}</span>
+      </div>
+      <div style="font-size:12px;color:#9298a2;font-family:'Noto Sans JP',sans-serif">{{ w.id }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:{{ w.ctaColor }};flex:none">
+      {{ w.cta }}
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ w.ctaColor }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+  </a>
+  {% endfor %}
+  {% else %}
+  {# §5 null-safe: has_weak이나 weak_list가 빈 경우 방어 빈 상태 #}
+  <div style="background:#fff;border:1px solid #e2e5ea;border-radius:15px;padding:22px;margin-bottom:12px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:6px">추출된 약점이 없습니다</div>
+    <div style="font-size:13px;color:#757b86;line-height:1.6">이번 진단에서는 약점 문법이 집계되지 않았어요. 기초 문법부터 차근차근 추천드릴게요.</div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if perfect %}
+  <div style="background:#e7f6ef;border:1px solid #c9e9da;border-radius:15px;padding:22px;margin-bottom:12px">
+    <div style="font-size:16px;font-weight:700;color:#0c8a5c;margin-bottom:6px">약점이 발견되지 않았습니다</div>
+    <div style="font-size:13px;color:#3a3f48;line-height:1.6">모든 문항을 맞혔어요. 다음 단계로 N4 문법 학습을 추천드려요.</div>
+  </div>
+  {% endif %}
+
+  <!-- recommend -->
+  <div style="background:#eaeefb;border:1px solid #d8e0fa;border-radius:15px;padding:20px;margin-top:6px">
+    <div style="font-size:12px;font-weight:700;color:#2f55d4;margin-bottom:7px">추천 학습 시작점</div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">{{ rec_title }}</div>
+    <div style="font-size:13px;color:#5b616b;line-height:1.6">{{ rec_body }}</div>
+  </div>
+
+  {% if not user %}
+  <a href="/login" style="display:flex;align-items:center;justify-content:center;gap:9px;background:#2f55d4;color:#fff;font-size:15px;font-weight:700;padding:15px 0;border-radius:14px;margin-top:18px;box-shadow:0 8px 20px -10px rgba(47,85,212,.6)">
+    결과 저장하고 약점 관리하기
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </a>
+  <div style="text-align:center;font-size:12px;color:#9298a2;margin-top:10px">로그인하면 약점 보관함과 진단 이력이 저장돼요</div>
+  {% endif %}
+
+  <div style="text-align:center;margin-top:28px"><a href="/restart" style="font-size:13px;font-weight:600;color:#757b86">처음부터 다시 진단하기</a></div>
+</div>
+{% endblock %}

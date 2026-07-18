@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JLPT 진단</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* 디자인 토큰 — "잉크 & 종이" (session 9, accent A=#2b3a67 lock).
+     색은 이 :root 한 곳에서만 정의 → 조정은 여기서. AI-slop 회피: solid ink accent,
+     따뜻한 오프화이트, 낮춘 radius, border 기반(그림자 배제). */
+  :root{
+    --bg:#f6f5f3;          /* 따뜻한 오프화이트(종이) */
+    --surface:#ffffff;
+    --ink:#17181a;         /* 본문(거의 검정) */
+    --ink-soft:#6b6f76;    /* 보조 텍스트 */
+    --ink-faint:#9a9ea5;   /* 흐린 캡션 */
+    --line:#e6e4df;        /* 얇은 경계(따뜻한 회색) */
+    --line-soft:#efece7;
+    --accent:#2b3a67;      /* 딥 인디고/남색 */
+    --accent-ink:#22305a;  /* accent hover/강조 */
+    --accent-bg:#eceef4;   /* accent 연한 틴트 */
+    --r-card:12px;
+    --r-ctl:9px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+  a{text-decoration:none;color:inherit}
+  input{font-family:inherit}
+  input:focus{border-color:var(--accent) !important}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  ruby rt{font-family:'Noto Sans JP',sans-serif;font-size:.46em;font-weight:400;color:#8a909c;letter-spacing:0}
+</style>
+</head>
+<body>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+
+  <!-- top bar -->
+  <div style="position:sticky;top:0;z-index:30;background:rgba(246,245,243,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)">
+    <div style="max-width:760px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;justify-content:space-between">
+      <a href="/" style="display:flex;align-items:center;gap:11px">
+        <div style="width:30px;height:30px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:16px">診</div>
+        <span style="font-size:15px;font-weight:700;letter-spacing:-.02em">JLPT 진단 데모</span>
+      </a>
+      {% if user %}
+      <a href="/mypage" style="display:flex;align-items:center;gap:9px">
+        <span style="font-size:13px;font-weight:600;color:#3a3f48">마이페이지</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px">{{ user.initial }}</div>
+      </a>
+      {% else %}
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;font-weight:600;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);padding:5px 11px;border-radius:8px">게스트 체험</span>
+        <a href="/login" style="font-size:13px;font-weight:700;color:#fff;background:var(--accent);padding:7px 15px;border-radius:8px">로그인</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="flex:1;max-width:760px;width:100%;margin:0 auto;padding:40px 28px 72px">
+    {% block content %}{% endblock %}
+  </div>
+
+</div>
+</body>
+</html>

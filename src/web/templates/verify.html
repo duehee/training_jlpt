@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:392px;margin:0 auto;padding-top:30px;text-align:center">
+  {% if status == "success" %}
+  <div style="width:52px;height:52px;margin:0 auto 18px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+  </div>
+  {% else %}
+  <div style="width:52px;height:52px;margin:0 auto 18px;border-radius:50%;background:#f4efe7;display:flex;align-items:center;justify-content:center">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b58a3a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
+  </div>
+  {% endif %}
+
+  <div style="font-size:23px;font-weight:800;letter-spacing:-.03em;margin-bottom:8px">{{ verify_title }}</div>
+  <div style="font-size:14px;color:var(--ink-soft);line-height:1.6;margin-bottom:24px">{{ verify_body }}</div>
+
+  {% if email %}
+  <div style="font-size:13px;color:var(--ink-faint);margin-bottom:24px">{{ email }}</div>
+  {% endif %}
+
+  {% if show_login %}
+  <a href="/login" style="display:inline-block;background:var(--accent);color:#fff;font-size:15px;font-weight:700;padding:12px 26px;border-radius:var(--r-ctl);letter-spacing:-.01em">로그인하러 가기</a>
+  {% endif %}
+
+  {% if show_resend %}
+  <form method="post" action="/login/resend" style="max-width:340px;margin:{% if show_login %}18px{% else %}0{% endif %} auto 0;text-align:left">
+    <div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px">이메일</div>
+    <input type="email" name="email" placeholder="you@example.com" required style="width:100%;border:1.5px solid var(--line);border-radius:var(--r-ctl);padding:11px 13px;font-size:15px;outline:none;background:var(--surface);color:var(--ink);margin-bottom:10px" />
+    <button type="submit" style="width:100%;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:700;padding:12px 0;border-radius:var(--r-ctl);cursor:pointer;letter-spacing:-.01em">확인 메일 다시 받기</button>
+  </form>
+  {% endif %}
+
+  <div style="margin-top:22px;font-size:13px;color:var(--ink-faint)"><a href="/">진단 데모로 돌아가기</a></div>
+</div>
+{% endblock %}

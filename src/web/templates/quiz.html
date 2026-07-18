@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+  <!-- progress -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <span style="font-size:13px;font-weight:700;color:#5b616b">문항 {{ q_num }} / {{ q_total }}</span>
+    <span style="font-size:12px;font-weight:700;color:{{ q_level_color }};background:{{ q_level_bg }};padding:4px 11px;border-radius:20px">{{ q_level }}</span>
+  </div>
+  <div style="height:6px;background:#e2e5ea;border-radius:3px;overflow:hidden;margin-bottom:28px">
+    <div style="height:100%;width:{{ progress_pct }};background:#2f55d4;border-radius:3px"></div>
+  </div>
+
+  <!-- stem -->
+  <div style="background:#fff;border:1px solid #e2e5ea;border-radius:18px;padding:30px 30px 28px;margin-bottom:22px">
+    <div style="font-size:12px;font-weight:700;color:#9298a2;margin-bottom:18px">빈칸에 들어갈 가장 알맞은 것을 고르세요</div>
+    {# §4 stem deviation: 실 API는 prompt_furigana(사전조립 ruby HTML)를 제공 → |safe 직접 출력.
+       null/공백이면 plain prompt(escape) 폴백 (세션 6 render.stem_display 패턴 계승). #}
+    <div style="font-family:'Noto Sans JP',sans-serif;font-size:27px;font-weight:500;line-height:2.05;color:#1a1c20">{% if prompt_furigana %}{{ prompt_furigana | safe }}{% else %}{{ prompt | e }}{% endif %}</div>
+    {# §5 null-safe: prompt_ko 없으면 한국어 줄 자체를 숨김 #}
+    {% if ko %}
+    <div style="font-size:14px;color:#757b86;line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid #eef0f3">{{ ko }}</div>
+    {% endif %}
+  </div>
+
+  <!-- choices -->
+  {% if choices %}
+  {% for c in choices %}
+  <a href="/quiz?i={{ i }}&sel={{ c.k }}" style="display:flex;align-items:center;gap:14px;background:{{ c.bg }};border:1.5px solid {{ c.border }};border-radius:14px;padding:15px 18px;margin-bottom:11px">
+    <div style="width:27px;height:27px;border-radius:8px;border:1.5px solid {{ c.dotBorder }};background:{{ c.dotBg }};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:{{ c.labelColor }};flex:none">{{ c.label }}</div>
+    <span style="font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:600;color:#1a1c20">{{ c.jp }}</span>
+    {# §5 null-safe: text_ko 키 생략 시 한국어 병기 숨김 (세션 6 render.choice_label 패턴) #}
+    {% if c.ko %}<span style="font-size:13px;color:#9298a2;margin-left:auto">{{ c.ko }}</span>{% endif %}
+  </a>
+  {% endfor %}
+  {% else %}
+  {# §5 null-safe: choices 빈 배열 방어 빈 상태 #}
+  <div style="background:#fff;border:1px solid #e2e5ea;border-radius:14px;padding:24px;text-align:center;font-size:14px;color:#9298a2">선택지를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.</div>
+  {% endif %}
+
+  <!-- next -->
+  {% if can_next %}
+  <a href="/quiz/next?i={{ i }}&sel={{ sel }}" style="display:block;margin-top:20px;text-align:center;background:{{ next_bg }};color:{{ next_color }};font-size:15px;font-weight:700;padding:16px 0;border-radius:14px">{{ next_label }}</a>
+  {% else %}
+  <div style="margin-top:20px;text-align:center;background:{{ next_bg }};color:{{ next_color }};font-size:15px;font-weight:700;padding:16px 0;border-radius:14px;cursor:not-allowed">{{ next_label }}</div>
+  {% endif %}
+</div>
+{% endblock %}

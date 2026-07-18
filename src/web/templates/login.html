@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:392px;margin:0 auto;padding-top:22px">
+  <div style="margin-bottom:26px">
+    <div style="font-size:25px;font-weight:800;letter-spacing:-.03em;margin-bottom:7px">{{ auth_title }}</div>
+    <div style="font-size:14px;color:var(--ink-soft);line-height:1.55">{{ auth_sub }}</div>
+  </div>
+
+  {% if notice %}
+  <div style="background:var(--accent-bg);border:1px solid var(--line);border-radius:var(--r-ctl);padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:3px">확인 메일을 보냈어요</div>
+    <div style="font-size:13px;color:var(--ink-soft);line-height:1.55">{{ notice }}</div>
+    {% if unverified_email %}
+    <form method="post" action="/login/resend" style="margin-top:10px">
+      <input type="hidden" name="email" value="{{ unverified_email }}" />
+      <button type="submit" style="border:none;background:none;padding:0;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;text-decoration:underline">확인 메일 다시 보내기</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div style="background:#fdf2f2;border:1px solid #f3d6d6;border-radius:var(--r-ctl);padding:12px 15px;margin-bottom:16px">
+    <div style="font-size:13px;color:#b4342e;line-height:1.5">{{ error }}</div>
+    {% if unverified_email %}
+    <form method="post" action="/login/resend" style="margin-top:9px">
+      <input type="hidden" name="email" value="{{ unverified_email }}" />
+      <button type="submit" style="border:none;background:none;padding:0;font-size:13px;font-weight:700;color:#b4342e;cursor:pointer;text-decoration:underline">확인 메일 다시 받기</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <form method="post" action="/login{% if signup %}?mode=signup{% endif %}" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:24px 22px">
+    {% if signup %}
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px">이름</div>
+      <input type="text" name="name" value="{{ form_name }}" placeholder="이름을 입력하세요" required style="width:100%;border:1.5px solid var(--line);border-radius:var(--r-ctl);padding:11px 13px;font-size:15px;outline:none;background:var(--surface);color:var(--ink)" />
+    </div>
+    {% endif %}
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px">이메일</div>
+      <input type="email" name="email" value="{{ form_email }}" placeholder="you@example.com" required style="width:100%;border:1.5px solid var(--line);border-radius:var(--r-ctl);padding:11px 13px;font-size:15px;outline:none;background:var(--surface);color:var(--ink)" />
+    </div>
+    <div style="margin-bottom:{% if signup %}9px{% else %}20px{% endif %}">
+      <div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px">비밀번호</div>
+      <input type="password" name="password" placeholder="••••••••" required style="width:100%;border:1.5px solid var(--line);border-radius:var(--r-ctl);padding:11px 13px;font-size:15px;outline:none;background:var(--surface);color:var(--ink)" />
+    </div>
+    {% if signup %}
+    <div style="font-size:12px;color:var(--ink-faint);line-height:1.5;margin-bottom:20px">8자 이상, 영문과 숫자를 함께 사용해 주세요.</div>
+    {% endif %}
+    <button type="submit" style="width:100%;border:none;text-align:center;background:var(--accent);color:#fff;font-size:15px;font-weight:700;padding:13px 0;border-radius:var(--r-ctl);cursor:pointer;letter-spacing:-.01em">{{ auth_cta }}</button>
+
+    <div style="display:flex;align-items:center;gap:12px;margin:18px 0">
+      <div style="flex:1;height:1px;background:var(--line-soft)"></div>
+      <span style="font-size:12px;color:var(--ink-faint);font-weight:500">또는</span>
+      <div style="flex:1;height:1px;background:var(--line-soft)"></div>
+    </div>
+
+    {% if google_enabled %}
+    <a href="/api/v1/auth/google" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--surface);border:1.5px solid var(--line);color:var(--ink);font-size:14px;font-weight:700;padding:12px 0;border-radius:var(--r-ctl);cursor:pointer">
+      <span style="font-size:15px;font-weight:800;color:#4285f4">G</span> Google로 계속하기
+    </a>
+    {% else %}
+    <div title="곧 지원됩니다" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--bg);border:1.5px solid var(--line-soft);color:var(--ink-faint);font-size:14px;font-weight:700;padding:12px 0;border-radius:var(--r-ctl);cursor:not-allowed">
+      <span style="font-size:15px;font-weight:800">G</span> Google 로그인 (준비 중)
+    </div>
+    {% endif %}
+  </form>
+
+  <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--ink-soft)">
+    {{ auth_switch_text }} <a href="/login?mode={{ auth_switch_mode }}" style="color:var(--accent);font-weight:700">{{ auth_switch_cta }}</a>
+  </div>
+  <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--ink-faint)"><a href="/">로그인 없이 게스트로 계속하기</a></div>
+</div>
+{% endblock %}
