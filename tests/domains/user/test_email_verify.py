@@ -103,7 +103,7 @@ def test_signup_issues_token_and_sends_email() -> None:
             assert len(fake.sent) == 1
             msg = fake.sent[0]
             assert msg["to"] == _EMAIL
-            assert "/api/v1/auth/verify?token=" in msg["body"]
+            assert "/verify-email?token=" in msg["body"]  # SSR 화면 링크
 
             # 2) 링크의 raw 토큰을 해시하면 DB에 저장된 토큰과 일치
             raw = msg["body"].split("token=")[1].split()[0]

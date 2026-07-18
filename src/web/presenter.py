@@ -99,6 +99,63 @@ def quiz_context(
     }
 
 
+def auth_context(mode: str) -> dict[str, Any]:
+    """login.html 화면 컨텍스트 (mode=login|signup). 순수 카피/분기값만.
+
+    슬롯(error/notice/form_* 등)은 라우터가 상황별로 채운다 — 여기선 mode 고정 텍스트만.
+    """
+    if mode == "signup":
+        return {
+            "signup": True,
+            "auth_title": "회원가입",
+            "auth_sub": "이메일로 가입하고 진단 기록을 저장하세요.",
+            "auth_cta": "회원가입",
+            "auth_switch_text": "이미 계정이 있으신가요?",
+            "auth_switch_mode": "login",
+            "auth_switch_cta": "로그인",
+        }
+    return {
+        "signup": False,
+        "auth_title": "로그인",
+        "auth_sub": "다시 오신 걸 환영해요. 이메일로 로그인하세요.",
+        "auth_cta": "로그인",
+        "auth_switch_text": "아직 계정이 없으신가요?",
+        "auth_switch_mode": "signup",
+        "auth_switch_cta": "회원가입",
+    }
+
+
+def verify_context(status: str) -> dict[str, Any]:
+    """verify.html 화면 컨텍스트 (status=success|expired|invalid). 순수 카피/분기.
+
+    엣지(만료/무효)에서 사용자가 막히지 않게 재발송/로그인 동선 플래그를 함께 준다
+    (정빈님 UX 지시). email 슬롯은 라우터가 채운다(성공 시 확인된 이메일).
+    """
+    if status == "success":
+        return {
+            "status": "success",
+            "verify_title": "이메일 확인 완료",
+            "verify_body": "이제 로그인하고 진단 기록을 이어갈 수 있어요.",
+            "show_login": True,
+            "show_resend": False,
+        }
+    if status == "expired":
+        return {
+            "status": "expired",
+            "verify_title": "링크가 만료됐어요",
+            "verify_body": "확인 링크는 24시간 동안만 유효해요. 이메일을 입력하면 새 링크를 보내드릴게요.",
+            "show_login": False,
+            "show_resend": True,
+        }
+    return {
+        "status": "invalid",
+        "verify_title": "유효하지 않은 링크예요",
+        "verify_body": "이미 사용됐거나 잘못된 링크예요. 이미 확인했다면 로그인하고, 아니면 새 링크를 받아보세요.",
+        "show_login": True,
+        "show_resend": True,
+    }
+
+
 def shape_weak_list(
     weak_points: list[WeakGrammarPoint], enrich: dict[str, dict[str, str | None]]
 ) -> list[dict[str, Any]]:

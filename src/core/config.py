@@ -58,6 +58,15 @@ class Settings(BaseSettings):
     # 이메일 확인 토큰 유효기간(세션 9 Q6 = 24h).
     email_verification_ttl_hours: int = 24
 
+    # ── Google OAuth (세션 9 §a / Q4 = 크레덴셜 차후 .env 주입) ──
+    google_client_id: str | None = Field(
+        default=None, validation_alias="GOOGLE_CLIENT_ID"
+    )
+    google_client_secret: str | None = Field(
+        default=None, validation_alias="GOOGLE_CLIENT_SECRET"
+    )
+    google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
+
     app_name: str = "jlpt-agent"
     app_version: str = "0.1.0"
 

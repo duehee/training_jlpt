@@ -155,10 +155,11 @@ def test_web_full_cycle() -> None:
                 r = await client.get("/result")
                 assert r.status_code == 200
 
-                # login stub
+                # login 폼 (실 이식) — 로그인/회원가입 전환 링크 노출
                 r = await client.get("/login")
                 assert r.status_code == 200
-                assert "준비 중" in r.text
+                assert "로그인" in r.text
+                assert "회원가입" in r.text
 
                 # explain stub (약점 카드 클릭 404 방지)
                 r = await client.get("/explain/grammar_n5_001")

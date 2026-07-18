@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
@@ -14,7 +15,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
-from src.db.models import EmailVerificationToken, User
+from src.db.models import (
+    DiagnosticSession,
+    EmailVerificationToken,
+    OAuthAccount,
+    User,
+)
+from src.domains.user.dto.response import DashboardData
+from src.shared.auth.jwt import get_subject
 from src.shared.auth.password import (
     hash_password,
     validate_password_policy,
@@ -200,3 +208,110 @@ async def reissue_email_verification_token(
     )
     await session.commit()
     return user, raw_token
+
+
+async def get_user_by_id(
+    session: AsyncSession, user_id: uuid.UUID
+) -> User | None:
+    """id로 사용자 조회. 없으면 None."""
+    return (
+        await session.execute(select(User).where(User.id == user_id))
+    ).scalar_one_or_none()
+
+
+async def resolve_user_from_token(
+    session: AsyncSession, token: str
+) -> User | None:
+    """JWT access token → User. 무효/만료/파싱실패/미존재는 모두 None.
+
+    web(SSR)이 쿠키에서 꺼낸 토큰을 넘기면 로그인 사용자를 돌려준다(쿠키 읽기는 web 담당).
+    """
+    subject = get_subject(token)
+    if subject is None:
+        return None
+    try:
+        user_id = uuid.UUID(subject)
+    except ValueError:
+        return None
+    return await get_user_by_id(session, user_id)
+
+
+async def get_user_dashboard(
+    session: AsyncSession, user: User
+) -> DashboardData:
+    """마이페이지 표시 데이터. 승격된 초기 진단 1건의 저장 결과를 읽어 반환(④).
+
+    진단 완료 이력이 없으면 has_diagnostic=False(화면은 진단 유도). 저장된
+    diagnosed_level/score를 그대로 읽어 quiz 재계산·교차 도메인 결합을 피한다.
+    """
+    if user.initial_diagnostic_session_id is None:
+        return DashboardData(nickname=user.nickname, has_diagnostic=False)
+    diag = (
+        await session.execute(
+            select(DiagnosticSession).where(
+                DiagnosticSession.id == user.initial_diagnostic_session_id
+            )
+        )
+    ).scalar_one_or_none()
+    if diag is None or diag.status != "completed":
+        return DashboardData(nickname=user.nickname, has_diagnostic=False)
+    return DashboardData(
+        nickname=user.nickname,
+        has_diagnostic=True,
+        diagnosed_level=diag.diagnosed_level,
+        score=diag.score,
+        max_score=diag.max_score,
+    )
+
+
+async def oauth_upsert_user(
+    session: AsyncSession,
+    *,
+    provider: str,
+    provider_account_id: str,
+    email: str,
+    name: str | None = None,
+) -> User:
+    """OAuth 로그인/가입. 기존 연결 계정이면 그 user 반환, 없으면 연결·생성.
+
+    - 이미 (provider, account_id)로 연결된 계정 → 로그인
+    - 미연결 + 같은 email의 기존 user 존재 → 그 user에 OAuth 계정 연결(계정 통합)
+    - 둘 다 아니면 신규 user 생성(비밀번호 없음, email_verified=True — provider가 검증)
+    """
+    account = (
+        await session.execute(
+            select(OAuthAccount).where(
+                OAuthAccount.provider == provider,
+                OAuthAccount.provider_account_id == provider_account_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if account is not None:
+        return (
+            await session.execute(select(User).where(User.id == account.user_id))
+        ).scalar_one()
+
+    user = (
+        await session.execute(select(User).where(User.email == email))
+    ).scalar_one_or_none()
+    if user is None:
+        user = User(
+            email=email,
+            nickname=(name or email.split("@")[0])[:50],
+            password_hash=None,  # 소셜 전용 — 비밀번호 로그인 불가
+            email_verified=True,  # provider가 이메일 소유를 검증함
+        )
+        session.add(user)
+        await session.flush()  # user.id 확보(OAuth 계정 FK용)
+
+    session.add(
+        OAuthAccount(
+            user_id=user.id,
+            provider=provider,
+            provider_account_id=provider_account_id,
+            email=email,
+        )
+    )
+    await session.commit()
+    await session.refresh(user)
+    return user
