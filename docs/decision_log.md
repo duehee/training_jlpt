@@ -1219,6 +1219,599 @@ ALTER TABLE grammar_chunks
 
 ---
 
+### [ARCH] E-19 — Stage 1 스키마 적재 + RAG 실동작 통과 (2026-06-08)
+
+> 정빈님 직접 위임으로 재현이 ORM 검증 후 실 DB 마이그레이션 + N5 137건 적재 + 임베딩 + RAG 검색까지 일괄 완료. 본 항목 lead 사후 등록 (재현 사후 보고 누적 기반).
+
+**결정:**
+
+#### 1. Stage 1 스키마 적재 완료
+- `jlpt_postgres/jlpt_db` ← 12 테이블 + `vector` + `pgcrypto` extension + `alembic_version=0001`
+- 적용 방식: offline SQL 렌더 (`alembic upgrade head --sql`) → psql 직접 적용 (`greenlet` 설치 전 우회)
+- ORM ↔ DB 컬럼 전수 일치 / 자기 대조 insert / 잘못된 chunk_type 거부 모두 통과
+
+#### 2. 어댑터 + 임베딩 구현
+- `scripts/load_chunks.py` — xlsx → DB 적재 (어댑터 정규화 5선 적용, 레벨 일반화: `--level N5/N4/N3`)
+- `scripts/embed_chunks.py` — text-embedding-3-small 임베딩 (레벨 일반화)
+
+#### 3. N5 실데이터 적재 + 임베딩 통과
+- `chunks` 137건 = point 109 + variant 3 + compare 25
+- `comparison_pairs` 25건 (자기 대조 3쌍 포함)
+- **임베딩 137/137** 모두 성공
+- **RAG 실동작 확인**: 한국어 쿼리 → 벡터 유사도 → top-k 정상
+
+#### 4. FastAPI 골격 + 검증
+- `/health`, `/health/ready`, `/` 라우터 (prefix 방식, 정빈님 직접 정리)
+- 검증: pytest 14/14 통과, ruff 통과, mypy 신규 0건 (pgvector 스텁 2건만 잔존 → 본 ack 묶음에서 pyproject `[tool.mypy.overrides]` 1줄 추가로 해소)
+
+#### 5. venv 회복 사건 (2026-06-06 → 06-08)
+- 06-06 검증 시 Python 3.11.9 + 풀 패키지 → 06-08 venv 3.14로 재생성 (원인 미상)
+- 정빈님 옵션 A 채택: `poetry env use 3.11.9` + `poetry install` → 06-06 검증 조합 복원
+- `pyproject.toml`에 dev 의존성 + `greenlet` 추가 완료 (정빈님 + 재현 직접)
+- 향후 재발 방지 권고: `.python-version` 파일 추가 + Python 3.11 고정 (CLAUDE.md §과거 실패 통합 후보)
+
+#### 6. 정정 / 잔여
+- mypy pgvector override = `pyproject.toml [[tool.mypy.overrides]]` 1줄 추가 (lead 처리, 본 ack 묶음) ✅
+- 재현 `00_db_overview.md` / `05_schema_reference.md` border "21" → **"25"** 정정 (재현 처리 영역, 본 세션 마무리 직전 통지) — 본 ack 묶음
+- 벡터 인덱스 (IVFFlat, Migration 5) — 데이터 규모 확보 후 후속 세션
+
+#### 7. 세션 5 전환 잔여 (재현 인계)
+- 학습 루프 LLM 구현 (RAG 청크 + gpt-4o-mini 설명 생성·문제·분기) — 다음 큰 마일스톤
+- 검색 품질 / 벡터 인덱스 튜닝
+- N4 데이터 적재 (수진 N4 입력 도착 시 `load_chunks.py --level N4` + `embed_chunks.py --level N4` 동일 패턴)
+
+**근거:**
+- E-18 target lock 후 정빈님 위임으로 재현 자율 진행 (정빈님 직접 소통 권한 활성)
+- 백지 재설계 원칙 3건 (level 1급 차원 / xlsx 고정 입력 / 단일 진실 + 파생 뷰) 모두 코드 반영
+- 어댑터 정규화 5선이 xlsx F1·F2 드리프트 클래스 구조적 제거
+
+**영향 범위:**
+- `project_summary.md §0·§9` 인프라 / 트랙 1 상태 갱신 — lead 처리 (summary.md evolve와 함께)
+- `database_schema.md` §13 chunks 본문 stale 잔존 → 후속 세션 lead 보강 후보
+- 다음 세션 (재현 학습 루프 / 수진 N4 진입 / 츠쿠야 대기) 진입 readiness 확보
+
+---
+
+## 2026-06-17 — 세션 6 (E-20 ~ E-35)
+
+### [PROCESS] E-20 — 세션 6 미션 = 엔드투엔드 한 사이클 검증 (2026-06-17)
+
+> 정빈님 명시 — "간단한 UI 제작해서 차후에 일단 한 싸이클이 잘 굴러가나 확인. 각 에이전트들 다 소환해서 xlsx 재작성하고 DB 재적재, 한 번 제대로 쭉 가봅시다."
+
+**결정:**
+
+#### 1. 미션 한 줄
+세션 6 = **엔드투엔드 한 사이클 검증**. N5/N4 xlsx 재작성 → DB 재적재 → 수진 진단 문항 v1.4 기반 API 정식화 → 하린 Streamlit 데모 UI 1 화면. 5명 풀팀 가동.
+
+#### 2. 트랙 분리 + 순차 게이트
+- **X1**: xlsx 재작성 (수진 메인 + 츠쿠야 native + 사사키 페어링 adversarial)
+- **X2**: DB 재적재 + 진단 API 정식화 (재현)
+- **X3**: Streamlit 데모 UI 1 화면 (하린, 신규 합류 첫 출투)
+- 게이트: X1 close → X2 진입 / X2 close → X3 코드 진입. lead가 SendMessage로 직접 게이트 운영.
+
+#### 3. 팀 구성 (5명, lead 제외)
+- `be_jaehyeon` (재현) — API/DB
+- `de_sujin` (수진) — Data
+- `jp_tsukuya` (츠쿠야) — Japanese native
+- `jp_sasaki` (사사키) — Adversarial reviewer
+- `fe_harin` (하린) — **Frontend, 본 세션 첫 합류** (정빈님 직접 페르소나 작성)
+- Team config: `~/.claude/teams/jlpt-team-6/config.json`
+
+#### 4. 본 세션 범위 외 (차후 사이클)
+- 트랙 B 잔여 4 카테고리 (지시·연체 / 의문 / 시간수량 / 부사류) — 보류
+- N3 본격 진입 — 보류
+- Stage 2 게이트 — 보류 (정빈님 명시 ack 시 진입)
+- 사사키 adversarial 플로우 단 (API → UI 가정) — 본 세션 (a) xlsx 데이터 한정, 플로우 단은 세션 7+
+
+**근거:**
+- "한 사이클 잘 굴러가나"가 MVP 신뢰의 base. 데이터·DB·API·UI 4단을 한 번 직렬로 굴려보지 않으면 어딘가 깨지는지 모름.
+- 5명 풀팀 동시 가동이라 게이트 운영 필수 — 게이트 없으면 race 또는 데이터/계약 충돌.
+- 사사키 페어링 구조 게이트 (세션 5 §3-1) 유지로 데이터 신뢰 보장.
+- 하린 첫 합류 = 페르소나 §3-2 시간 20% 상한 강제로 prod 화려함 방지.
+
+**영향 범위:**
+- 5명 spawn prompt 발신 완료. 5명 모두 receipt ack + clarifying question 4건 응답.
+- Task #1~#5 등록 (jlpt-team-6 task list).
+- 본 세션 종료 시 `docs/planning/session_6/pm_minseok/summary.md` 작성 필수.
+
+---
+
+### [PROCESS] E-21 — 재현 정빈님 직접 진행분 흡수 + DB 팀 공유 운영 원칙 (2026-06-17)
+
+> 정빈님 명시 (세션 6 시작 직후) — "재현이 지금 작성한 DB가 있을테니 서로 공유하면서 작업하십쇼."
+
+**결정:**
+
+#### 1. 정빈님 직접 진행분 흡수 (재현 1순위)
+- 세션 5 종료 후 (2026-06-09 ~ 2026-06-17) 정빈님이 직접 진단 플로우 작업 진행:
+  - `cfd8764 feat : 진단 플로우 기초 구성`
+  - `8a22bf2 feat : 진단 플로우 테스트 검증`
+- 재현은 본 세션 X2 1단계로 두 커밋 변경분 + 현재 DB 스키마/적재 상태 정독 후 **lead 사후 보고** (CLAUDE.md 2026-06-06 정빈님 직접 소통 권한 = 즉시 사후 보고 원칙).
+
+#### 2. 재현 산출물 2건 = 본 세션 팀 공유 base
+- `docs/planning/session_6/be_jaehyeon/01_intake_jeongbin_diagnostic.md` — 정빈님 직접 진행분 코드 + DB 현재 상태 사후 보고 (lead용 + 팀 공유 base)
+- `docs/planning/session_6/be_jaehyeon/02_loader_column_spec.md` — `load_chunks --level N5/N4`가 기대하는 xlsx 컬럼 스키마 명세 (수진 X1 진입 입력)
+
+#### 3. 공유 운영 원칙
+- 재현 01·02 산출 close 시 재현이 SendMessage로 **수진(02)** + **하린(01·02)** 통지. lead 보고 병행.
+- 츠쿠야 + 사사키도 native/adversarial 컨텍스트로 활용 가능 (재현 통지가 곧 트리거).
+- X1 (수진 xlsx 진입) = 재현 `02_loader_column_spec.md` 도착이 트리거.
+
+#### 4. clarifying question 답변 (4건)
+- **수진**: xlsx 컬럼 스키마 = 재현 02 명세에 맞춘다 (X1→X2 게이트 충돌 차단).
+- **사사키**: adversarial 범위 = (a) xlsx 데이터 한정 (예문·레벨 누수·검색성·출처 페어링). 플로우 단 adversarial은 세션 7+. 단 API consumer 관점 컬럼 부적합 발견 시 즉시 lead 보고.
+- **재현**: 정빈님 직접 진행분 Read = X1 close 무관 선행 OK.
+- **하린**: 데모 실행 모드 = ① 라이브 API 동작 정공법. mock fallback은 본 세션 X (미션 = 한 사이클 검증). X2 close 전 스케치 선행 OK.
+
+**근거:**
+- 정빈님 직접 소통 권한 (CLAUDE.md §[TEAM]) 활성 = 재현이 흡수해서 lead·팀에 공유가 정공법. 정보 비대칭 차단.
+- xlsx ↔ load_chunks 컬럼 스키마 계약을 X1 진입 전에 묶지 않으면 재작업 cost 증가. 02 명세가 X1 진입 트리거.
+- 하린이 신규 합류라 재현 01·02 정독으로 백엔드/DB 컨텍스트 흡수 가능 (consumer가 producer 산출 정독).
+
+**영향 범위:**
+- 재현 X2 1단계 명시 start. 수진/츠쿠야/사사키/하린은 회복 read + 사전 정리 모드.
+- 본 세션 운영 원칙 = "재현 산출이 팀 공유 base". summary.md §3 본 세션 메타 통찰 등재 예정.
+- 재현 02 명세 → 수진 xlsx 헤더 → load_chunks 입력 = 한 사이클의 데이터 골격 확정 라인.
+
+---
+
+### [DATA] E-22 — 충돌-9 + 088 = 10건 N4 이월 종결 (Q29-A 적용, 행정 등재) (2026-06-17)
+
+> 사사키 회복 read 시 "충돌-9 종결 기록 미발견" 보고로 발견된 행정 누락. 실제 결정은 세션 5 staging v1.3 §1-2에서 완료됐으나 별도 E-NN ID 미부여.
+
+**결정:**
+- Q29-A "nihongo 우선" 정책으로 충돌-9 (085·047·086·087·106·107·108·109·110) + 088 ので = **10건 N4 이월 종결**.
+- 086·087 = 한 덩어리 / 047·085 = 쌍 (동일 레벨 이동 강제).
+- border_meta 제거 8건 = 047·085·086·087·106·107·108·110 (109 たり〜たり = E-12 FALSE 제외, 088은 별도 처리).
+
+**근거:** 정빈님 Q29-A 명시 + 수진 04 v1.3 §1-2 처리 완료 + 사사키 fetch 페어링 정합. 행정 ID 누락만 보완.
+
+**영향 범위:** N5 master 109 → 93. lead spawn prompt에 staging md 회복 read 누락 사건은 §과거 실패 통합 (사사키 회복 read 안내 미흡).
+
+---
+
+### [PROCESS] E-23 — 하린 explanation 인증 게이트 = (b) 정식 게스트/프리뷰 경로 (2026-06-17)
+
+> 하린 X3 코드 진입 직전 발견한 계약 충돌 — `api_endpoints §8-3 GET explanation`이 회원 인증 전용인데 데모는 P3 게스트 우선.
+
+**결정:** **(b) 정식 게스트/프리뷰 경로 노출** 채택. X2 API 정식화 시 라우터에 게스트 접근 explanation 경로 반영. 정빈님 위임 → lead 추천 → 정빈님 ack.
+
+**대안 검토:**
+- (a) 진단 직후 간이 link-session 회원 전환 — 단계 추가, 게스트 우선 정책과 마찰
+- (c) 데모 한정 우회 — 장기 호환 X
+
+**근거:** P3 게스트 우선 정책 + 데모/실 서비스 동일 라인 유지 + 장기 호환.
+
+**영향 범위:** 재현 X2 라우터에 게스트 경로 신설 (06 consumer 계약 정식판 §7 반영). 하린 UI v3 게스트 경로 호출.
+
+---
+
+### [PROCESS] E-24 — X1 범위 = N5만, N4 본 세션 보류 (2026-06-17)
+
+> 수진 X1 진입 직전 catch — "N4 4 카테고리 close"는 master 목록 close였고 청크 본문 (embedding_text + l3 + border) close가 아님. N4 ~79건 embedding_text 0건 상태.
+
+**결정:**
+- X1 = **N5 xlsx 재작성만** close.
+- N4 본 세션 보류, 후속 별도 트랙.
+- 트랙 분리: X1 (N5 xlsx) → X2 (N5 DB+API) → X3 (Streamlit UI).
+
+**근거:** 02 §4-3 = embedding_text 빈 행은 임베딩 누락 = RAG 검색 누락. N4를 본 세션에 끼우면 빈 껍데기 적재. 미션 본질 "한 사이클 굴러가나"는 N5로도 충족.
+
+**N4 본문 생성 주체 (후속 세션 결정 예고):** lead 잠정 옵션 B = 재현 4o-mini batch 초안 + 수진/츠쿠야/사사키 페어링 검수.
+
+**영향 범위:** lead 세션 5 summary §0 "N4 4 카테고리 close" 표현 stale (목록 close vs 본문 close 갭) = §과거 실패 통합.
+
+---
+
+### [PROCESS] E-25 — 재현 X2 게이트 3건 결정 (2026-06-17)
+
+**결정:**
+- **(a) 출제 shuffle 정책**: 잠정 결정적 순서 (`ORDER BY level, question_key`) 유지. 셔플 도입 = 후속 세션 결정.
+- **(b) 정식 문항 적재 스크립트 신규**: 승인. `scripts/seed_diagnostic_questions.py` + JSON 데이터 분리 (load_chunks 패턴).
+- **(c) 예문(jp/ko) 출처**: LLM generated 구조화 `examples[]` 채택. 데이터 부담 0 + 4o-mini 비용 게이트 + `cached` 배지 가시화 정합.
+- **(d) 진단 문항 버전**: lead spawn "v1.4"는 stale, 실제 = **v1.5** (정답 분포 A2/B2/C3/D3 정렬 close). 적재는 v1.5 기준.
+
+**근거:** 본 세션 미션 "한 사이클 base 검증" 우선. 정량 평가 (eval threshold) 및 셔플은 후속 세션.
+
+**영향 범위:** 재현 06 consumer 계약 정식판 §7에 examples[] 명시. lead 진단 문항 버전 stale = §과거 실패 통합.
+
+---
+
+### [DATA] E-26 — 04 staging 내부 stale 2건 정정 (2026-06-17)
+
+> 사사키 + 츠쿠야 페어링이 동시 동일 catch한 04 v1.3.1 내부 정합 모순.
+
+**결정:**
+- **① N5 master 정답 행 수 = 93** (94 아님). 산수: 109 − (§1-1 6건 + §1-2 10건) = 93. §9 표 "-15/109→94" stale → "-16/109→93" 정정.
+- **② 088 ので 귀속 = 확정** (조사 group 接続助詞·이유, 츠쿠야 판정). footer "미정" stale 정정.
+
+**근거:** 산수 검증 + 츠쿠야 판정 본인 + 사사키 fetch nihongo N4 조사 섹션 등재 정합. 수진 v1.3.2 버전 엔트리 추가로 정정 이력 보존 (E-17 부속 패턴).
+
+**영향 범위:** lead spawn prompt "94" 표기 stale + lead border_meta 17행 계산 누락 (088 미포함) = §과거 실패 통합. 페어링 게이트 산수 검증 모범 사례.
+
+---
+
+### [ARCH] E-27 — X2 재적재 시맨틱 = `--replace-level` 채택 (2026-06-17)
+
+> 재현 X2 진입 직전 발견 — UPSERT만으론 xlsx에서 빠진 N4 이월 16건 + comparison 8건이 DB stale 잔류 → 진단/RAG 노이즈.
+
+**결정:** `scripts/load_chunks.py`에 `--replace-level` 플래그 추가 (기본 off, 켜면 해당 레벨 선 DELETE 후 UPSERT). 정빈님 명시 ack (AGENTs.md §승인 게이트 = 데이터 손실 작업 + 로더 수정).
+
+**대안 검토:**
+- (B) 별도 정리 스크립트 — 절차 복잡, 거부
+- (C) 전체 truncate — N4/N3 미래 데이터까지 = 과함, 거부
+- 수동 DELETE 1회 — 멱등성 X
+
+**근거:** "깨끗한 한 사이클 검증" = 미션 본질 영향. 멱등 유지 + 절차 단순 + 재사용.
+
+**영향 범위:** 재현 적재 실측 = 137 stale chunks → 113 정확 교체 확인. CLAUDE.md §승인 게이트 모범 (재현이 정빈님 ack 전 코드 작성 보류).
+
+---
+
+### [DATA] E-28 — 088 border_meta orphan 제거 → 16행 (2026-06-17)
+
+> 수진 v2 작성 중 발견 + 츠쿠야 + 사사키 동시 catch.
+
+**결정:** border_meta 시트에서 088 row 제거 → **16행** (25 − 9: 047·085·086·087·106·107·108·110 + 088).
+
+**대안 검토:**
+- 17행 유지 (loader 무해, 사사키 분석) — valid alternative이나 xlsx 일관성 X
+
+**근거:** xlsx 일관성 우선 (양측이월 8건과 동일 처리). 088은 N4 이월이라 N5 sheet에 잔존 시 분석/검수 노이즈. lead 17행 계산 누락 자체는 §과거 실패 등재.
+
+**영향 범위:** N5 baseline 최종 = 93/93/16/3/17·17.
+
+---
+
+### [DATA] E-29 — 053 variant 2건 N4 보류 (A 채택, lead 자의 (C) 정정) (2026-06-17)
+
+> 재현 입력 스모크 검증에서 053_kinshi/053_kanyu level 컬럼 = N4 결함 catch (`load_chunks --level N5` 실행 시 N4 고아 청크 발생). lead 자의 답 (C) level=N5 정정 → 수진 catch (A) 재정정 → 사사키 명시 지지.
+
+**결정:**
+- **(A) 053_kinshi/053_kanyu = N4 배치 보류** (046_tsutae/079_amari/074_koro 동일 패턴). variant_chunks 5 → **3행**.
+- 053 본문은 staging 03 §5-1/5-2에 보존 → 후속 N4 트랙에서 재사용.
+- 053 master note: "금지·권유 = N4 후속 세션 variant" 명시.
+
+**lead 자의 (C) 정정 인정:**
+- 직전 lead 답 = (C) level 컬럼 N5 정정 + variant_label N4 의미 보존 → **데이터 오류**.
+- 금지/권유 な = jlptsensei #48/#55 = N4 사실. (C)는 본문↔level 충돌 + RAG 레벨 필터 누수 위험.
+- 수진 catch (A) = 정확. 사사키 명시 지지 "재라벨 X, 제거가 정답 (046/074 패턴)".
+
+**근거:** AGENTs.md §범위 규율 = "발견 이슈 보고만, 조용히 수정 X" 페어링 모범 (수진 + 사사키 + 재현 합의로 lead 자의 답 막음).
+
+**영향 범위:** N5 chunks = 113 (93+3+17). variant 명칭 lead stale (031_031i 등 comparison pair ID 혼동) = §과거 실패 통합.
+
+---
+
+### [DATA] E-30 — 079 N4 누수 정정 (074 미러) (2026-06-17)
+
+> 사사키 🟡 catch (X1 v2 adversarial) — 079 master name 「たくさん/すこし/あまり〜ない」 + embed에 「あまり〜ない」 포함했으나 jlptsensei N4 #3 확정 항목.
+
+**결정:**
+- 079 master name = 「たくさん/すこし」 (あまり 제거)
+- embedding_text에서 「あまり〜ない」 본문 제거
+- note 이동: "あまり〜ない = N4 후속, variant 079_amari 예정"
+
+**근거:** 074 ごろ N5 + 頃 N4 variant 분리와 동일 미러 처리 = 형제 비일관 해소. 사사키 leak sweep "N5 벡터에 N4 누수 0" 확정.
+
+**영향 범위:** N5 vector embedding에서 N4 항목 누수 = 0.
+
+---
+
+### [ARCH] E-31 — X1 v3 close (2026-06-17)
+
+**결정:**
+- **N5 v3 xlsx** = master 93 / l3 93 / border_meta 16 / variant 3 / comparison_pairs 17 / comparison_chunks 17 / embedding_text 빈행 0.
+- **N5 chunks 113** (point 93 + variant 3 + compare 17).
+- 츠쿠야 ✅ native PASS + 사사키 🟢 adversarial PASS (🔴 0 / 🟡 0 / 🔵 3 후속) + ★ N4 누수 0.
+
+**근거:** 페어링 구조 게이트 완결 = 츠쿠야 native + 사사키 fetch adversarial 이중 그물. 수진 v1.3.2 변경 이력 보존 + v3 단일 소스 갱신 모범.
+
+**영향 범위:** N5 데이터 베이스라인 lock. 후속 N4 트랙 진입 readiness 확보.
+
+---
+
+### [ARCH] E-32 — 재현 진단 seed 스크립트 작성 close (2026-06-17)
+
+**결정:**
+- `scripts/seed_diagnostic_questions.py` 신규 — JSON seed → `diagnostic_questions` 멱등 UPSERT (load_chunks 패턴).
+- `scripts/diagnostic_questions_v1.json` co-locate (본 세션 임시, 후속 세션에 `data/diagnostic/` 이동).
+- Pydantic 검증 (정답 무결성·레벨·4지선다·key 고유) + 정답 비노출 회귀 테스트 포함.
+
+**근거:** CLAUDE.md §승인 게이트 (신규 스크립트). 정빈님 (b) 승인 + load_chunks 패턴 정합.
+
+**영향 범위:** pytest 53 → 62 (신규 9). 진단 문항 10건 적재 라인 확보.
+
+---
+
+### [PROCESS] E-33 — 본 세션 explanation/RAG 범위 = 포함 (2026-06-17)
+
+> 재현 step 5 적재 후 발견 — embedding_text 길이 schema 가이드 미달 (point median 76자, 87/93건 <150).
+
+**결정:**
+- **본 세션 explanation/RAG 범위 = 포함** (X3 데모 핵심 가시화 = P3).
+- **eval threshold 0.9 정량 평가 = 후속 트랙** (본 세션 = base 검증, 임계값 평가 X).
+- **embedding_text 길이 보강 = 후속 트랙** (수진 measure-first 권고 채택).
+
+**근거:**
+- E-19 실측 동작 통과 (한국어 쿼리 → 벡터 → top-k 정상) = 본 세션 충분.
+- 수진 분석: 87건 = vocab 25 + 실질 문법 62. 준어휘성 단순 항목 (とても/いつも/だれ)은 짧은 게 타당. 150자 강제 = padding으로 벡터 품질 저하 위험.
+
+**후속 트랙 measure-first**:
+1. Y1 적재 + 본 세션 E2E 실측 동작 확인
+2. 후속 트랙 진입 시 `rag_retrieval_accuracy` eval (임계 0.9) N5 측정
+3. PASS → schema §무결성4 현실화 (point ≥60 등) + stretch target
+4. 미달 → 검색 실패 청크 타겟 보강 (vocab 25 제외, compare <50 9건 우선)
+
+---
+
+### [ARCH] E-34 — X2 본체 close (진단 라우터 5 엔드포인트 + explanation 프리뷰) (2026-06-17)
+
+**결정:**
+- **Phase A** — 진단 라우터 5 엔드포인트 (`src/api/routes/diagnostic.py` + `sessions.py` + `schemas/diagnostic.py`)
+  - sessions / questions / answers / complete / result
+  - 익명 세션 생성 (`sessions.py`, §5-1)
+  - 보안 불변식: `ClientQuestion` 정답 제외 / 서버 채점 / 소유 검증 / 논리 FK (`diagnostic_answers.question_id`)
+  - 생명주기: `started → in_progress → completed` + 멱등 (409)
+- **Phase B** — explanation 프리뷰 게스트 경로 (`GET /diagnosis/sessions/{id}/explanation/{grammar_point_id}`)
+  - 3블록 구조: `retrieved`{point_chunk, compare_chunks} + `generated_explanation` + `examples[]` + `cached`
+  - 게스트/프리뷰 경로 (E-23 (b) 채택)
+  - 예문 = LLM generated (E-25 (c) 채택)
+  - N4 미적재 포인트 → 404 (하린 빈 상태 분기, 의도)
+
+**검증:**
+- 실DB E2E 스모크 PASS (정답 누출 False ✓, FK 검증 ✓, 생명주기 ✓, 인증 ✓)
+- 실 OpenAI 스모크 PASS (grammar_n5_002 explanation 3블록 정상 동작 + cached 배지)
+- pytest 55 / mypy / ruff 클린
+
+**근거:** 06 consumer 계약 정식판 + 04 router validation plan + 03 consumer contract draft 기반.
+
+**영향 범위:** 백엔드 한 사이클 완결. 하린 X3 코드 진입 트리거.
+
+---
+
+### [DATA] E-35 — 진단 v2/v3 가독성 보강 (정빈님 verify 발견 후 본 세션 연장) (2026-06-17)
+
+> 정빈님 브라우저 verify에서 직접 발견 — 학습자가 일본어 진단 문항을 못 읽음. 본 세션 미션 본질 영향 → close 미루고 보강 진입.
+
+**결정:**
+- **Alembic 0002**: `diagnostic_questions` 테이블에 `stem_furigana` Text NULL + `stem_ko` Text NULL 추가.
+- **`choices` JSONB 확장**: 각 항목에 `text_ko` 키 추가 (schema 변경 없음).
+- **수진 v2 → v3** (단일 소스 갱신, v2 git 보존):
+  - 10문항 × 3건 (furigana 한자만 ruby HTML + stem_ko + choices.text_ko)
+  - 사사키 adversarial 발견 6건 정정: 🔴 Q-01 stem_ko baked-in (정답 조사 「가」 미리 채움) + 🟡 Q-04 "중" 누설 + Q-09 A 라벨 + Q-10 A·C 라벨
+  - Q-06/Q-07 様態/伝聞 채점 soft = **후속 세션 결정** (scoring 규칙 변경 영역)
+- **재현 schema/seed/모델/`ClientQuestion` 확장** (정답 비노출 불변식 유지).
+- **하린 UI null-safe 렌더** (`stem_display`/`choice_label` 헬퍼, furigana/ko 없을 때 일본어 폴백).
+
+**검증:**
+- 츠쿠야 ✅ furigana native PASS (10/10, 送りがな + 함정 독음 정확)
+- 사사키 🟢 v3 adversarial PASS (정정 5건 반영 + 신규 누설 0)
+- 재현 적재 실측 = 10건 furigana 10/10 + ko 10/10 + choices.text_ko 10/10 + 정답 누출 False
+- pytest 72 / mypy 0 / ruff 0 / Streamlit headless boot health 200
+
+**근거:** 정빈님 직접 verify가 본 세션 본질 결함 발견 = "한 사이클 굴러가나"의 진짜 의미 = "사람이 쓸 수 있는 한 사이클". 정빈님 시간 완화 명시 ("코드 작성하면서 좀 걸려도 한 번 실행할 수 있는 형태").
+
+**영향 범위:**
+- 데이터 영역 정답 baked-in 사례 (Q-01) = §과거 실패 통합 (페어링 자기 catch 못한 데이터 검수 패턴, 향후 "한국어만 보고 정답 추론 가능한가" 자기점검 절차 등재 후보).
+- lead 정정 통지 race 4건 누적 = §과거 실패 통합 (다음 세션 spawn prompt "큰 정정 진입 전 lead 한 줄 ack 확인" 운영 패턴 등재).
+
+---
+
+## 2026-06-25 — 세션 7 (E-36 ~)
+
+### [ARCH] E-36 — design_backend (FastAPI + Jinja2 SSR 시안) → `src/web/` 이식 진입 (2026-06-25)
+
+**결정:** 정빈님이 `docs/planning/design/design_backend/` 에 추가한 SSR 시안(8 화면)을 세션 7에서 본 프로젝트로 이식한다. 본 세션 한정 = **Phase 1 핵심 4 화면** (intro / quiz / scoring / result + 공통 `base.html`)만 이식. login / dashboard / explain 3 화면은 다음 세션 (Stage 2 게이트 영향, 정빈님 별도 ack).
+
+**근거:**
+- 정빈님 미션 명시 ("design_backend 정보를 화면으로 쓰려고, 세션 7에서는 저 화면을 이식하는 걸 먼저 해보쟈") = 진입 트리거.
+- 3축 판단 = 페인포인트 ✅ (사람이 쓸 수 있는 한 사이클 = 세션 6 정빈님 verify 정신 계승) / 기술 임팩트 ✅ (RAG explain 화면 자리) / Phase 적합성 ✅ (Phase 1 진단 흐름 정합) → 2/3 통과 채택.
+- 시간 / 결합도 통제 = 4 화면만 우선 = 한 사이클 빠른 검증 + login·dashboard는 인증·이력 영역 결정 동반 필요.
+
+**이식 plan (정빈님 ack 완료):**
+- **위치**: `src/web/` 신설 (FastAPI APIRouter sub-app, `src/api/main.py`에 마운트). 단일 ASGI app + 단일 uvicorn 명령.
+- **데이터 연결**: 직접 service import (httpx 우회). design_backend의 `data.py` 더미는 폐기 (이식 X).
+- **세션 상태**: 세션 6 `src/api/routes/sessions.py` 익명 세션 + 쿠키 (`session_id`) 재활용. design_backend의 starlette SessionMiddleware 인메모리 dict 패턴 폐기.
+- **기존 `src/ui/` Streamlit**: 보존 + 병행 (변경 0). 비교/회귀 안전망.
+- **시각 정합**: 인라인 스타일 유지 (시안과 1:1, 토큰화는 후속 트랙).
+- **운영 모드**: Claude Code Agent Teams (tmux split + TeamCreate). 세션 6 답습.
+
+**참여 팀원:**
+- 재현 (`be_jaehyeon`) — `src/web/` 라우터 + 진단 service 연결 + 테스트
+- 하린 (`fe_harin`) — design_backend templates 5종 → `src/web/templates/` 이식 + null-safe 폴백 계승
+- 비참여 (본 트랙 무영향): 수진 / 츠쿠야 / 사사키 (데이터·검수 영역)
+
+**영향 범위:**
+- `src/web/` (신설 디렉터리), `src/api/main.py` (라우터 마운트 1줄), `tests/test_web_routes.py` (신설)
+- `docs/planning/session_7/{be_jaehyeon,fe_harin,pm_minseok}/` (산출물 자리)
+- 다음 세션 검토 = login / dashboard / explain 이식 + 인증 게이트 product 결정 (lead 에스컬레이션)
+
+---
+
+### §부속 — E-36 진행 결정 (2026-06-27)
+
+본 세션 진행 중 정빈님 결정 + lead 운영 ack를 누적. E-36 본문 변경 없이 진행 추가만.
+
+**§a. 세션 상태 보관 방식 — (B) FK 연결 채택**
+- 결정: `session_id` 쿠키 단일 + DB 익명 세션 레코드에 진단 세션 FK 컬럼 추가
+- 근거: 쿠키 read → DB 1회 추가 / 정합성 DB 제약 위임 / Phase 2 학습 루프 확장 자연
+- 대안 (A) 쿠키 병렬 보관 = 클라이언트 정합 책임 + 다중 진단 세션 모호성 → 채택 X
+
+**§b. 마이그레이션 트랙 분리 — (나) 채택**
+- 결정: 마이그레이션 plan(1·2단계) 과 라우터/서비스 plan(3·4단계) ack 게이트 분리
+- 근거: Alembic 마이그레이션은 CLAUDE.md `[CONSTRAIN] 승인 필요` + `[INFORM] 과거 실패` ("Alembic 마이그레이션 없는 스키마 변경 금지") 양쪽 트리거 → 라우터 plan과 검토 깊이 분리 안전
+- 대안 (가) 단일 plan 묶음 = ack 1회 단순화이나 데이터 손실 위험 영역과 라우터 영역 검토 분산 우려 → 채택 X
+
+**§c. 마이그레이션 plan 0003 ack**
+- 산출: `docs/planning/session_7/be_jaehyeon/01_migration_plan.md` (재현 작성)
+- 적용 본문: `anonymous_sessions.active_diagnostic_session_id` 가산 컬럼 1개 (UUID, nullable, FK → `diagnostic_sessions.id`, `use_alter=True`, `ondelete=SET NULL`, 인덱스 `idx_anon_sessions_active_diag`)
+- 마이그레이션 번호: `0003` (head 0002 → 0003)
+- backfill: 안 함 (NULL = 무해, (B) 모호성 재도입 회피)
+- 회귀: 가산 nullable + 기존 read/write 0 → 기존 pytest 72건 영향 X
+- 경로 확장 ack (마이그레이션 트랙 한정): `src/db/models/diagnostic.py` + `src/db/migrations/versions/0003_*.py` (2단계 close 후 재현 §2 원래 경로로 복귀)
+
+**§d. base.html topbar 로그인 분기 — plan 비교안 권고 + lead 추천 (A)**
+- 결정: 하린 plan에 (A)(B) 비교안 본문 둘 다 포함, lead 추천 = (A) 시안 구조 최대 보존 (로그인 버튼만 표시). 정빈님이 plan 검토 단계에서 최종 결정
+- 근거: phase 2 진입 시 login 화면 이식 동반 → 시안 구조 보존이 자연. (B)는 phase 1만 깔끔하나 phase 2 base.html 재구조화 비용 발생
+
+**§e. Product Brief (Phase 2+) — 학습 / 무료 / 독학자 lock**
+- 산출: `docs/planning/session_7/pm_minseok/03_product_brief_for_design_team.md` (lead 작성)
+- 사용처: 정빈님 → 디자인팀 전달용. design_backend phase 1 다음 시안 작업 입력
+- 정빈님 lock 결정: 제품 정체성 = 학습 플랫폼 / 비즈니스 = 무료 / 타깃 = 독학자
+- Phase 2 시안 의뢰 4종: 학습 화면 / 복습 큐(SRS) / 오답 노트 + 프로필·설정
+- Phase 3 후속 3종: 진도·통계 상세 / 문법 라이브러리 / 학습 플랜·커리큘럼
+- 범위 외: 결제·구독 (무료 lock) / 청해·한자·어휘 (Phase 4 별도 트랙) / B2B·교사 (독학자 lock)
+
+**§f. 하린 템플릿 이식 plan 채택 (3-1단계)**
+- 산출: `docs/planning/session_7/fe_harin/01_template_port_plan.md`
+- 적용 본문: 5종 1:1 이식 (base/intro/quiz/scoring/result) + base.html (A) topbar 시안 구조 보존 + null-safe 폴백 7케이스 (weak 빈/enrich 누락 보강 포함) + 인라인 스타일 문자 단위 1:1 + 검증 = 시안 diff + 폴백 동작 (단위 테스트 미작성, 재현 통합 테스트 의존)
+- **⭐ furigana stem deviation 채택**: 시안 `(표기,후리가나)` 튜플 루프 폐기, `prompt_furigana | safe` 직접 출력 + plain `prompt | escape` 폴백. 근거 = 실 API 형상 직접 수용 + 역파싱 부담 0 + 세션 6 `render.stem_display` 계승. **재현 라우터 컨텍스트 변경 동반** (`stem` 튜플 → `prompt_furigana` str + `prompt` str). 재현 3단계 라우터 plan 입력
+- 본 작업 진입 ack (§10 #1~#5). §10 #6 (재현 §7 4건 사전 공유) = 재현 3단계 ack 이후
+
+**§g. `/login` 라우트 처리 = (가) stub 라우터 = 200 "준비 중"**
+- 결정: base.html (A) 채택 시 "로그인" 버튼 링크가 본 세션 미이식 라우트인 문제 해소
+- 적용: 재현 라우터 plan 입력 — `/login` GET = 200 "준비 중" 빈 페이지 stub (phase 2 login 이식 시 자연 교체)
+- 대안 (나) `/` redirect = 사용자 액션 의도 외 / (다) 링크 비활성화 = 시안 1:1 변형. 모두 채택 X
+
+**§h. CDN 폰트 처리 = (가) 본 세션 1:1 유지**
+- 결정: 시안 base.html의 Pretendard·Noto Sans JP CDN 링크 그대로 유지 (시안 README "현재는 CDN만 사용" 명시 일관)
+- 근거: 시각 정합 우선. 폰트 누락 시 `font-family` 시스템 폴백으로 화면 안 깨짐
+- phase 2+ self-host = 별도 트랙 등재 (라이선스 + `src/web/static/` 추가)
+- 본 결정은 정빈님 product brief "CDN 의존 없음" 표현이 시안 README `static/` 비어있음 절을 참조한 것으로 정정 — 본 세션은 시안 1:1 우선
+
+**§i. 마이그레이션 2단계 적용 close + 3단계 진입 ack**
+- 적용 결과: `alembic upgrade head` 0002 → 0003 / pytest 72 passed / mypy 통과 / ruff 통과 / 라이브 DB 검증 (column UUID nullable YES / FK ON DELETE SET NULL / 인덱스 `idx_anon_sessions_active_diag`) 전부 통과
+- **FK 명칭 단축 정정 (사후 ack)**: plan 명세 `fk_anonymous_sessions_active_diagnostic_session_id_diagnostic_sessions` (70자) → Postgres 식별자 63자 한도 초과 → `fk_anon_sessions_active_diag_session_id` (39자)로 단축. 의미 변경 0 + SQLAlchemy 자동 추론 영향 0
+- **세션 종료 통합 등재 후보** (CLAUDE.md §과거 실패): "Postgres 식별자 63자 한도 — FK/인덱스 명칭 생성 시 사전 확인"
+- 3단계 = 재현 라우터/서비스 이식 plan 작성 진입 ack. 경로 본인 §2 원래 영역 복귀 (`src/web/`, `src/api/main.py`, `tests/test_web_routes.py`)
+- 3단계 plan 입력값: 4 라우트 + `/restart` + `/login` stub / 진단 service 직접 import / 쿠키 + FK 활용 / 하린 §7 4건 형상 (`prompt_furigana` str + `prompt` str / `choices` 변환 / `weak_list` enrich / `/login` stub) / async + mypy/ruff 통과
+
+**§j. 하린 §10 #1~#5 close ack (templates 5종 본 작업 완료)**
+- 적용: `src/web/templates/{base,intro,quiz,scoring,result}.html` 신설 (외부 변경 0, `src/ui/` 무변경)
+- Jinja2 렌더 검증 9 케이스 PASS (intro / scoring / quiz_happy·null·empty_choices / result_happy·null·empty_weak·perfect) — autoescape=True FastAPI 설정 일관
+- 시안 정합: base/intro/scoring 문자 단위 100% / quiz·result = 의도된 §4·§5 deviation + 주석만 (인라인 스타일 무변경)
+- 검증 스크립트 = scratchpad 일회성 (회귀는 재현 통합 테스트 담당)
+- §10 #6 (재현 §7 4건 형상 정렬) = 재현 3단계 라우터 plan ack 이후 진입 대기
+
+**§k. 재현 3단계 라우터/서비스 plan ack (4단계 진입)**
+- 산출: `docs/planning/session_7/be_jaehyeon/02_router_service_port_plan.md`
+- 패키지 구조: `src/web/` 4 모듈 = `templates.py` / `session.py` / `presenter.py` (DB 무관 순수) / `routes.py`
+- 데이터 연결: **in-process 핸들러 직접 호출** (httpx 우회) — `src/api/routes/diagnostic.py` 호출만, 수정 0. 불변식 단일 출처 + 중복 0. HTTPException → SSR 리다이렉트/폴백 변환 유일 어댑테이션
+- 7 라우트: `/`, `/quiz?i=&sel=`, `/quiz/next?i=&sel=`, `/scoring`, `/result`, `/restart`, `/login` (stub 200, plain HTMLResponse)
+- (B) FK 생명주기: 쿠키 `session_id` = 기존 `anon.session_token` 재활용 + `active_diagnostic_session_id` 활성 포인터. `/restart` = 명시 NULL 리셋 + ondelete SET NULL 안전망
+- 하린 §7 4건 확정안 (plan §5): stem `prompt_furigana` str + `prompt` str / choices presenter 시안 형상 생성 + 선택 하이라이트 라우터 계산 (시안 main.py:140-149 1:1) / weak_list 라우터 enrich + N4 등 미적재 raw 폴백 / `/login` plain HTMLResponse stub (템플릿 영역 미접근)
+- tests: `tests/test_web_routes.py` 3개 (full_cycle / login_stub / restart) — `test_diagnostic_api.py` 패턴 계승
+
+**§l. `/api` 루트 충돌 해소 = (A) JSON 루트 이전**
+- 결정: 기존 `@app.get("/")` JSON 응답을 `@app.get("/api")`로 이전 (한 줄). `/`는 SSR intro 전용
+- 근거: 시안 템플릿 절대경로 (`/quiz` 등) 사용 → web router에 prefix 못 붙임. JSON dead route 회피
+- 경로명 `/api` 채택: 기존 JSON API가 `/api/v1/...` prefix 일관 사용 → 의미 자연 + 충돌 0
+- 본 변경은 lead의 "마운트 추가만" 경계 살짝 초과 → 정빈님 명시 ack로 포함 확정
+- 대안 (B) 등록 순서 SSR 우선 + JSON dead = 비권장 (취약 + 혼란)
+
+**§m. 1차 MVP 재산정 — "독학자 자기 주도 1바퀴 데모" lock (2026-06-29)**
+- 결정: 1차 MVP = "독학자가 회원가입 → 진단 → 약점 학습 → 복습 1바퀴까지 자기 주도 가능한 무료 데모". Product Brief lock (§e 학습/무료/독학자) 유지 + Phase 단계 분할 통합 (Phase 1 진단 + Phase 2 학습 루프 + Phase 5 인증 + 배포 기본 = 단일 1차 MVP 게이트)
+- 근거: 정빈님 발견 ("서비스가 가능한 수준" + "1차 MVP를 다시 산정해야하나 고민"). 현 brief Phase 1→2→3→4 단계 분할이 외부 노출 가능한 1차 출시 범위 명확화 부족 → 통합 게이트로 압축
+- 1차 MVP 포함 영역: 진단 흐름 (close) + 학습 루프 3종 (학습/복습/오답) + 프로필·설정 + 인증 (login/회원가입/dashboard) + 배포 기본 (Docker/헬스체크/로깅)
+- 1차 MVP 외 (2차 MVP+): 진도 통계 / 문법 라이브러리 / 학습 플랜·커리큘럼 / 청해·한자·어휘 / 결제·B2B
+- 베타 출시 형태 = 미결 (close beta / open beta / soft launch — 세션 12 결정 게이트)
+
+**§n. 세션 8 미션 = DTO 분리 단일 미션 (2026-06-29)**
+- 결정: 세션 8 = 백엔드 layer boundary 명확화 (presentation ↔ application ↔ domain ↔ persistence) 단일 미션
+- 근거: 정빈님 발견 페인 ("DTO도 분리가 안 된 상태로 진행되니까 조금 복잡스러운 거 같다"). Phase 2 학습 루프 진입 전 baseline 안정화 필요. 단일 세션 = 미션 명확화 + ack 게이트 명확
+- 결정 게이트 (세션 8 plan): (a) DTO 라이브러리·패턴 (Pydantic v2 model_validate / dataclass / attrs) (b) DTO 위치 (전용 패키지 vs schemas 확장) (c) 마이그레이션 범위 (전 도메인 vs 핵심 boundary만)
+- 대안: (i) 본 세션 7 내 DTO 트랙 진입 — 시간 한도 초과 + 미션 확장 위험 → 채택 X. (ii) login·dashboard 이식 먼저 → DTO baseline 없이 학습 루프 진입 시 회귀 위험 → 채택 X
+
+**§o. Phase 1 MVP 로드맵 작성 — 세션 8~12 plan (2026-06-29)**
+- 산출: `docs/planning/session_7/pm_minseok/04_phase1_mvp_roadmap.md` (lead 작성)
+- 본문: 5세션 추정 근거 + 세션별 plan (미션/입력/핵심 작업/산출물/팀원/검증/결정 게이트/위험/추정 길이) + 변수 + 3 시나리오 (낙관 4 / 현실 5 / 보수 6~7)
+- 단일 진실: 본 문서 (세션 7 산출). 후속 세션에서 위치 조정 또는 `docs/implementation_roadmap.md`에 흡수 검토
+- 활용: 세션 8 lead 회복 순서 입력값
+
+**§p. 세션 7 close (2026-06-29)**
+- 정빈님 브라우저 verify 통과 ("전체적으로는 문제가 없는 거 같다") + design_backend 4 화면 + /login·/explain stub 정상 + 1 사이클 클릭 통과
+- 검증 5종 통과: pytest 74 / mypy / ruff / async 강제 / 라우트 등재 (8 라우트)
+- CLAUDE.md §과거 실패 통합 등재 3건 (Postgres 63자 한도 / 미커밋 핸드오프 명시 / 미커밋 origin 확인)
+- 두 팀원 graceful shutdown + Clean up team 진입
+- 본 세션 산출물 commit 여부 = 정빈님 직접 결정 (세션 8 진입 전)
+
+---
+
+## 2026-06-29 — 세션 8 (E-37)
+
+- 세션 미션: **DTO 분리 — 백엔드 전 도메인 package-by-feature 전환 (baseline 안정화)**
+- 운영 모드: 정빈님 ↔ 재현 (`be_jaehyeon`) 직접 페어. lead (`pm_minseok`) = 사후 보고 수신 + summary/decision_log/CLAUDE.md 등재.
+- 결과: 한 세션 내 전 도메인 완료. pytest 74 무결 (리팩토링 전후 동일, 회귀 0). 정빈님 직접 도메인 단위 커밋 12건 (`186354a` → `d5dd762`).
+- 산출 위치: `src/domains/{quiz,session,content,learning,user}/` + `src/shared/{cache,llm,prompts}/` + `src/db/models/user.py` 분리. `src/services/`·`src/api/schemas/` 폐기.
+- 종합: `docs/planning/session_8/pm_minseok/summary.md`
+
+### §부속 — E-37 진행 결정 (2026-06-29 ~ 2026-07-07)
+
+**§a. 세션 번호 = 8 lock (2026-06-29)**
+- 결정: 정빈님 명시 = 세션 8. lead 자동 증가 X (CLAUDE.md §INFORM 세션 번호 부여).
+
+**§b. 세션 7 잔재 commit = 정빈님 직접 영역, lead 무개입 (2026-06-29)**
+- 결정: 미커밋 working tree (세션 7 산출물 잔재) = 정빈님 직접 처리. lead는 건드리지 않음.
+
+**§c. DTO 위치 + 서비스 로직 = 정빈님 ↔ 재현 직접 페어 (2026-06-29)**
+- 결정: 본 세션은 정빈님이 재현 채널에서 직접 페어 진행. lead는 결과 사후 보고 수신 후 등재.
+- 근거: CLAUDE.md §[TEAM] §통신 규칙 "정빈님 직접 소통 권한" 패턴 적용.
+
+**§d. DTO 마이그레이션 범위 = 전 도메인 (2026-06-29)**
+- 결정: 전 도메인 일괄 진입. lead first-cut 권고 (Phase 2 진입 전 핵심 boundary만) 기각.
+- 근거: 정빈님 = "일단 전반적으로 도메인 전체를 건드리는 게 맞지 않을까". 결과 = 한 세션 내 완주로 정합 확인.
+
+**§e. 첫 산출물 형태 = (가) 전체 도메인 진단 + 옵션 + 분할 권고 plan 선행 (2026-06-29)**
+- 결정: (가) 채택 = 전체 도메인 현황 진단 + DTO 위치/변환 패턴 옵션 + 분할 권고 plan → 정빈님 확정 후 도메인별 구현 진입.
+- 대안: (나) Diagnostic 도메인 바로 plan+구현 → 채택 X (안전 이동 순서 필요).
+
+**§f. Package by feature 전환 — 도메인 우선 구조 (2026-06-29~)**
+- 결정: `api/services/db` (by layer) → `src/domains/{quiz,session,content,learning,user}/` (by feature).
+- 근거: 도메인 응집도 우선 = layer boundary 명확화 + Phase 2 확산 시 자연 스케일.
+
+**§g. 도메인 내부 구조 = controller / service / (util) / dto/{request,response}**
+- 결정: 각 도메인이 `controller` (=router) + `service` + `(util)` + `dto/{request,response}` 소유. DTO는 request/response 분리.
+- 근거: 계약 분리 = API 진입/이탈 명확. util은 도메인 필요 시만.
+
+**§h. session 독립 도메인 (quiz에 흡수 X)**
+- 결정: 익명/진단 세션 = 별도 도메인. quiz와 분리 유지.
+- 근거: 세션 도메인은 인증/게스트 승격/생명주기 로직 독자성 큼. 확산 대비.
+
+**§i. ORM은 `db/models/` 공유 유지 (도메인엔 행위만)**
+- 결정: SQLAlchemy 모델 = `src/db/models/` 위치 유지. 도메인 폴더엔 controller/service/dto (행위)만.
+- 근거: cross-domain FK (anon ↔ diag ↔ user) 강함 → 도메인 분산 시 순환 import + alembic 누락 위험. 절충안 (물리 위치 db/, 논리 소유 도메인) 채택.
+
+**§j. 공통 인프라 → `src/shared/` 분리 (cache/llm/prompts)**
+- 결정: 도메인 무관 인프라 (cache/llm/prompts) = `src/shared/` 하위로 분리.
+- 근거: 도메인이 아닌 횡단 관심사 = shared/core 계층 분리로 도메인 간 결합도 낮춤.
+
+**§k. path 소유 = controller (A안), 경로 문자열 `/api/v1/*` 보존**
+- 결정: path prefix를 각 controller가 소유. 경로 문자열은 기존 `/api/v1/*` 그대로 유지.
+- 근거: 프론트 계약 0 변경 = 회귀 위험 최소. 도메인 응집도 우선.
+
+**§l. 컨벤션 = quiz 패턴 (async + ORM) 일관 적용**
+- 결정: 모든 도메인 = quiz 패턴 (async + ORM) 일관.
+- 근거: 정빈님이 sync / raw-SQL 예시 검토 후 기존 유지 결정. CLAUDE.md §CONSTRAIN async I/O 강제 정합.
+
+**§m. 도메인 규칙 정리**
+- 결정: (1) dto = 순수 계약 (로직 X) (2) 작은 도메인은 util 생략 가능 (3) 내부 서비스는 controller 생략 가능.
+- 근거: 도메인별 크기에 맞춘 유연성 = over-structure 회피.
+
+**§n. dead 함수 2건 유지 (미래 사용 뼈대)**
+- 결정: `quiz/service.py::record_answer` (참조 0) + `learning/service.py::generate_explanation` (참조 0) = 삭제 보류, 유지.
+- 근거: 미래 사용 의도 뼈대 (주석 명시). 세션 9 인증 붙일 때 `record_answer` 실사용 가능성. 세션 9에서 재검토.
+
+**§o. 세션 8 close (2026-07-07)**
+- 검증 5종 통과: pytest 74 무결 (리팩토링 전후 동일) / mypy 63 files / ruff / async 강제 / 호출 테스트 6 passed.
+- 품질 지표: web ORM 직접 조회 3→0 / 역방향 import 1→0 / 익명세션 생성 중복 2→1.
+- 커밋: 정빈님 직접 도메인 단위 12건 (`186354a` → `d5dd762`).
+- CLAUDE.md §과거 실패 통합 등재 2건: (1) 대규모 파일 이동 회귀 내성 패턴 (2) lead over-engineering 사례.
+- 재현 (`be_jaehyeon`) graceful shutdown + Clean up team 진입.
+- 세션 9 예고: 정빈님 명시 = 세션 9 전 전반 프롬프트 점검·변경 예정.
+
+---
+
 ## 미결 및 상태 (임시)
 > 단일 진실 = `decision_log.md` (본 파일) + `glossary.md` + `docs/planning/session_N/pm_minseok/summary.md`. (구 `projectState.json`은 2026-06-06 세션 4에서 삭제 — stale 누적 + 위 3종으로 대체.)
 

@@ -26,6 +26,8 @@ JLPT 학습자를 위한 개인 관리 AI 에이전트.
 RAG 기반으로 약점 문법 포인트를 진단하고 간격 반복(spaced repetition) 학습을 제공한다.
 Phase 1 범위: N5~N3 진단 + 학습 기록 (프로덕션 수준).
 
+**1차 MVP 정의** (정빈님 lock, 2026-06-29, 세션 7 §m): "독학자가 회원가입 → 진단 → 약점 학습 → 복습 1바퀴까지 자기 주도 가능한 무료 데모". 포함 영역 = 진단 흐름 + 학습 루프 3종 (학습/복습/오답) + 프로필·설정 + 인증 (login/회원가입/dashboard) + 배포 기본. 베타 출시 경로 = `docs/planning/session_7/pm_minseok/04_phase1_mvp_roadmap.md` 참조 (세션 8~12 plan).
+
 ## [INFORM] 아키텍처
 - Backend: FastAPI + async SQLAlchemy 2.0
 - DB: PostgreSQL 16 + pgvector
@@ -108,6 +110,11 @@ Phase 1 범위: N5~N3 진단 + 학습 기록 (프로덕션 수준).
 - 2026-06-17 — **lead 산수 검증 누락 (border_meta 17행 사건, E-26·E-28)**: lead 직전 명세 "border_meta = 17행 (25 − 8)" = 088 미포함 계산. 츠쿠야 + 수진 동시 catch (산수 검증 페어링) → 16행 정정. 향후 행수/총수 명세 시 lead가 자체 산수 1회 재검증 + 산수 명시 강제.
 - 2026-06-17 — **lead variant 명칭 stale (E-29 부속)**: "기존 variant = 031_031i/084_084i/106_ta"는 comparison pair ID와 혼동한 lead 표기. 실제 잔존 variant = 026_informal/082_keisiki/035_alt. 수진 catch → lead 인정. 명세 시 ID 직접 조회 (xlsx 또는 staging md) 강제, 메모리 기반 표기 X.
 - 2026-06-17 — **정답 baked-in 사례 (Q-01 진단 문항, E-35)**: stem_ko "남자**가** ___ 쓰러져 있었습니다"에서 정답 조사 「가」 미리 채워넣음 + 빈칸 엉뚱한 자리. 정빈님 브라우저 verify에서 직접 발견 (수진/츠쿠야/사사키 검수 단계 통과). 사사키 v2 adversarial에서도 같은 유형 catch 누락 → 정빈님 발견 후 v3 정정. **향후 진단 데이터 작성 시 "한국어 번역만 보고 정답 추론 가능한가" 자기점검 절차 강제** (수진 §5 부분 반영 → 전 문항 일관 적용 강화).
+- 2026-06-29 — **Postgres 식별자 63자 한도 — FK/인덱스 명칭 사전 확인** (세션 7 §i, 재현 0003 마이그레이션). plan에 명세한 FK `fk_anonymous_sessions_active_diagnostic_session_id_diagnostic_sessions` (70자) → Postgres 한도 초과로 `alembic upgrade` 1차 실패 → `fk_anon_sessions_active_diag_session_id` (39자) 단축 적용. 선례 `fk_users_initial_diagnostic_session_id_diagnostic_sessions` (58자)는 한도 내였던 것. → **FK/인덱스 명칭 생성 시 63자 한도 사전 확인 강제**. 의미 변경 0 + SQLAlchemy 자동 추론 영향 0이라 사후 단축 가능하나 plan 단계에서 미리 점검 권고.
+- 2026-06-29 — **세션 종료 시 미커밋 working tree 변경을 핸드오프에 명시(또는 커밋)** (세션 7 §p, 재현 제안). 세션 6 종료 시 `src/api/main.py` (sessions/diagnostic 라우터 마운트 2줄) 미커밋 상태로 남음 → 세션 7 git diff에 세션 6 잔재 + 세션 7 변경이 합쳐서 잡힘 → lead 미감지 변경 오진단 사건 (sessions/diagnostic 마운트가 재현 추가로 오인) 발생. → **세션 종료 핸드오프 시 미커밋 변경 영역 명시(또는 커밋) 강제**. 다음 세션 git diff 혼선 방지.
+- 2026-06-29 — **세션 시작 시 미커밋 변경 영역의 origin 확인** (세션 7 §p, lead 자체). 세션 시작 git status에 `M src/api/main.py` 표시되어 있었으나 origin (이전 세션의 어떤 작업인지) 확인 누락 → 본 세션 진행 중 git diff에서 합쳐진 변경을 본 세션 산물로 오진단. → **세션 시작 시 git status 항목별 origin 확인 권고** (이전 세션 산물 vs 본 세션 진입 시 정빈님 직접 변경 vs 외부 도구 변경). 오진단 회피.
+- 2026-07-07 — **대규모 파일 이동 (package 재구성) 회귀 내성 패턴** (세션 8, 재현 제안). package-by-layer → package-by-feature 전 도메인 전환 (`src/domains/{quiz,session,content,learning,user}/` + `src/shared/`) 대규모 리팩토링 = pytest 74 무결 유지 + 회귀 0. **핵심 패턴**: (1) 매 스텝 pytest green 유지 (도메인 단위 스텝, 하나 옮기고 green 확인 후 다음) (2) 절대경로 import (상대경로 대비 리팩토링 내성 높음, IDE·find/replace 안전) (3) 도메인 단위 커밋 (12건, 되돌리기 지점 확보 + git diff 해석 명확). → 향후 대규모 파일 이동·구조 전환 시 3 패턴 재사용 권고.
+- 2026-07-07 — **lead over-engineering 사례 (세션 8 진입)**: 세션 8 진입 시 lead가 spawn 본문 외 부산물 (결정 누적표 §a~§e / 운영 모드 안내 / 회복 read 권고 / 도메인 진입 순서 권고 등) 자의 작성 → 정빈님 즉시 정정 ("이 정도까진 필요없고 그냥 재현 소환하고 세션 8 내용 전달하면 되는데 왜 이리 복잡하게 한거야?"). PM 페르소나 §6 "추상적 조언 X. 구체적 액션 아이템 O" 위반. → **lead lean 모드 강제**: spawn 단계 = spawn 본문 + 정빈님 ack 1회. 결정 누적표는 정빈님 결정 실제 도착 시 등재 (진입 시점 예고 등재 금지). 정빈님 ↔ 팀원 직접 페어 모드일수록 lead 개입 최소화. (feedback 메모리 `feedback_lean_lead_ops.md` 등재.)
 - (이후 실패 사례를 여기에 누적)
 
 ## [INFORM] MCP 서버
