@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import AnonymousSession
+from src.db.models import AnonymousSession, User
 
 # 익명 세션 TTL (진단 한 사이클 보존 — 데모 기본 24h).
 _ANON_TTL = timedelta(hours=24)
@@ -63,3 +63,23 @@ async def set_active_diagnostic(
     """익명 세션의 활성 진단 포인터 설정 + 커밋(진단 시작 시 web에서 호출)."""
     anon.active_diagnostic_session_id = diagnostic_session_id
     await session.commit()
+
+
+async def promote_anonymous_session(
+    session: AsyncSession, anon: AnonymousSession, user: User
+) -> bool:
+    """게스트 익명 세션을 신규 user에 승격(회원가입 시 진단 이력 이전).
+
+    - anon.linked_user_id ← user.id (익명 세션을 계정에 연결)
+    - user.initial_diagnostic_session_id ← anon의 진단 세션(최초 진단으로 기록)
+
+    이미 다른 계정에 연결된 익명 세션(linked_user_id != None)은 승격하지 않고 False.
+    자기 진단 이력을 자기 새 계정에 잇는 것이라 hijack 위험 없음(본인 쿠키 기준).
+    """
+    if anon.linked_user_id is not None:
+        return False
+    anon.linked_user_id = user.id
+    if anon.active_diagnostic_session_id is not None:
+        user.initial_diagnostic_session_id = anon.active_diagnostic_session_id
+    await session.commit()
+    return True

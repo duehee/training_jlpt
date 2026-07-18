@@ -8,11 +8,29 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import httpx
+from fastapi import APIRouter, Cookie, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
 from src.db.session import get_session
+from src.domains.session.service import (
+    promote_anonymous_session,
+    resolve_anonymous_session,
+)
+from src.shared.auth.oauth import (
+    GoogleOAuthClient,
+    build_google_authorize_url,
+    get_google_oauth_client,
+)
+from src.shared.auth.tokens import generate_token
+from src.web.session import (
+    ACCESS_COOKIE_NAME,
+    COOKIE_NAME,
+    OAUTH_STATE_COOKIE_NAME,
+    OAUTH_STATE_MAX_AGE,
+)
 from src.domains.user.dto.request import (
     LoginRequest,
     ResendVerificationRequest,
@@ -33,6 +51,7 @@ from src.domains.user.service import (
     VerificationTokenExpiredError,
     authenticate_user,
     issue_email_verification_token,
+    oauth_upsert_user,
     register_user,
     reissue_email_verification_token,
     verify_email_token,
@@ -60,7 +79,9 @@ async def _send_verification_email(
 ) -> None:
     """확인 링크 메일 발송. 발송 실패가 가입 자체를 막지 않도록 예외를 흡수한다
     (사용자는 재발송으로 복구 가능 — happy path 강제 X)."""
-    verify_url = f"{settings.app_base_url}/api/v1/auth/verify?token={raw_token}"
+    # 메일 링크는 SSR 화면(하린 /verify-email)으로 — 클릭 시 결과 화면이 뜬다.
+    # (API /api/v1/auth/verify는 회귀 테스트·프로그래매틱 진입점으로 유지.)
+    verify_url = f"{settings.app_base_url}/verify-email?token={raw_token}"
     try:
         await sender.send(
             to=email,
@@ -80,8 +101,12 @@ async def signup(
     body: SignupRequest,
     session: AsyncSession = Depends(get_session),
     sender: EmailSender = Depends(get_email_sender),
+    session_token: str | None = Cookie(default=None, alias=COOKIE_NAME),
 ) -> SignupResponse:
-    """이메일/비밀번호 회원가입. 성공 시 미인증 사용자 생성 + 확인 메일 발송."""
+    """이메일/비밀번호 회원가입. 성공 시 미인증 사용자 생성 + 확인 메일 발송.
+
+    게스트 진단 쿠키(session_id)가 있으면 익명 세션의 진단 이력을 새 계정에 승격한다.
+    """
     try:
         user = await register_user(
             session,
@@ -101,6 +126,10 @@ async def signup(
     await _send_verification_email(
         sender, email=user.email, nickname=user.nickname, raw_token=raw_token
     )
+    if session_token:  # 게스트 진단 이력 승격(익명 세션이 유효할 때만).
+        anon = await resolve_anonymous_session(session, session_token)
+        if anon is not None:
+            await promote_anonymous_session(session, anon, user)
     return SignupResponse.model_validate(user)
 
 
@@ -163,3 +192,61 @@ async def resend_verification(
             sender, email=user.email, nickname=user.nickname, raw_token=raw_token
         )
     return ResendVerificationResponse()
+
+
+# ── Google OAuth (세션 9 §a) ──
+@router.get("/google")
+async def google_authorize() -> RedirectResponse:
+    """Google 동의 화면으로 리다이렉트. CSRF 방지용 state를 쿠키에 심는다."""
+    state = generate_token()
+    response = RedirectResponse(build_google_authorize_url(state))
+    response.set_cookie(
+        OAUTH_STATE_COOKIE_NAME,
+        state,
+        max_age=OAUTH_STATE_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+    )
+    return response
+
+
+@router.get("/google/callback")
+async def google_callback(
+    code: str,
+    state: str,
+    session: AsyncSession = Depends(get_session),
+    oauth_client: GoogleOAuthClient = Depends(get_google_oauth_client),
+    state_cookie: str | None = Cookie(default=None, alias=OAUTH_STATE_COOKIE_NAME),
+) -> RedirectResponse:
+    """Google 콜백. state 대조(CSRF) → code 교환 → 계정 upsert → JWT 쿠키 + 리다이렉트."""
+    if not state_cookie or state_cookie != state:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OAuth state 불일치 (요청 위조 의심).",
+        )
+    try:
+        google_user = await oauth_client.exchange_code(code)
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Google 인증에 실패했습니다.",
+        ) from exc
+
+    user = await oauth_upsert_user(
+        session,
+        provider="google",
+        provider_account_id=google_user.sub,
+        email=google_user.email,
+        name=google_user.name,
+    )
+    token = create_access_token(subject=str(user.id))
+    response = RedirectResponse("/mypage", status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(
+        ACCESS_COOKIE_NAME,
+        token,
+        max_age=settings.jwt_access_token_expire_minutes * 60,
+        httponly=True,
+        samesite="lax",
+    )
+    response.delete_cookie(OAUTH_STATE_COOKIE_NAME)  # 1회용 state 정리
+    return response
